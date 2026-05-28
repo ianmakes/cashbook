@@ -108,9 +108,8 @@ function clearOtpKey() {
 }
 
 function triggerMockAuth(methodName) {
-  const emailInput = document.getElementById('auth-email-input').value;
-  const phoneInput = document.getElementById('auth-phone-input').value;
-  const otpInput = document.getElementById('auth-otp-input').value;
+  const emailEl = document.getElementById('auth-email-input');
+  const emailInput = emailEl ? emailEl.value : '';
 
   let displayName = 'Secure Owner';
   let authDetail = methodName;
@@ -123,16 +122,6 @@ function triggerMockAuth(methodName) {
     displayName = emailInput.split('@')[0];
     displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
     authDetail = `Email: ${emailInput}`;
-  } else if (methodName === 'Phone OTP Verify') {
-    if (otpInput !== '2605' && otpInput.length > 0) {
-      showDrawerAlert('Invalid OTP. Use simulated SMS code "2605".');
-      return;
-    }
-    displayName = `SMS (+${phoneInput.replace(/\D/g, '')})`;
-    authDetail = 'Phone Auth (OTP)';
-  } else if (methodName === 'Google Sign-in') {
-    displayName = 'Alex Mercer';
-    authDetail = 'Google Authenticated';
   }
 
   // Save session details to state
@@ -167,17 +156,14 @@ function logout() {
   localStorage.removeItem('aura_user_session');
   appState.user = null;
   
-  // Reset fields
-  document.getElementById('auth-otp-input').value = '';
-  document.getElementById('otp-entry-box').style.display = 'none';
-  document.getElementById('send-otp-btn').style.display = 'flex';
-  
   // Show auth view
   const authOverlay = document.getElementById('auth-overlay');
-  authOverlay.style.display = 'flex';
-  setTimeout(() => {
-    authOverlay.style.opacity = '1';
-  }, 50);
+  if (authOverlay) {
+    authOverlay.style.display = 'flex';
+    setTimeout(() => {
+      authOverlay.style.opacity = '1';
+    }, 50);
+  }
 }
 
 // ==========================================
@@ -1871,7 +1857,8 @@ window.addEventListener('DOMContentLoaded', () => {
     hideAuthScreen();
     initializeDashboardData();
   } else {
-    // Show Auth tab standard on load
-    switchAuthTab('google');
+    // Directly show Email / Password form section on load
+    const emailSec = document.getElementById('auth-sec-email');
+    if (emailSec) emailSec.style.display = 'block';
   }
 });

@@ -2,12 +2,12 @@
 
 // Firebase Configuration Credentials
 const firebaseConfig = {
-  apiKey: "AIzaSyB5BTaSVFNfNpJaZDreXXtQwIF7i_5vONg",
-  authDomain: "lvt-time.firebaseapp.com",
-  projectId: "lvt-time",
-  storageBucket: "lvt-time.firebasestorage.app",
-  messagingSenderId: "1042667873303",
-  appId: "1:1042667873303:web:629be0cf5e5adb15d92852"
+  apiKey: "AIzaSyAwSMNITxGcpvgi0t2Typfc3z6ScTnxo-o",
+  authDomain: "cashbook-7a92f.firebaseapp.com",
+  projectId: "cashbook-7a92f",
+  storageBucket: "cashbook-7a92f.firebasestorage.app",
+  messagingSenderId: "925458507826",
+  appId: "1:925458507826:web:117b355007bc234638342b"
 };
 
 // Initialize Firebase App
@@ -32,7 +32,7 @@ class StorageService {
     if (window.appState && window.appState.user && window.appState.user.uid) {
       return window.appState.user.uid;
     }
-    return "TfrXL9CA6OThoRUAnsJInIHKPpx2"; // Default Super User UID
+    return "WzNEwcXMeVa1RRgxIFbzL7WvRON2"; // Default Super User UID
   }
 
   // Native Web Crypto API SHA-1 Hasher for Cloudinary Upload Signatures
