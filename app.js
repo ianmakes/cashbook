@@ -170,12 +170,20 @@ function logout() {
 // TABS & NAVIGATION CONTROLLER
 // ==========================================
 function switchTab(tabId) {
+  // If hash routing is not set to this tab, update it and return.
+  // Let the popstate/hashchange event call switchTab securely.
+  if (window.location.hash !== `#/${tabId}`) {
+    window.location.hash = `#/${tabId}`;
+    return;
+  }
+
   appState.currentTab = tabId;
   
   // Toggle desktop sidebar active buttons
   document.querySelectorAll('.nav-link-btn').forEach(btn => {
     btn.classList.remove('active');
-    if (btn.getAttribute('onclick').includes(tabId)) btn.classList.add('active');
+    const onClickAttr = btn.getAttribute('onclick');
+    if (onClickAttr && onClickAttr.includes(tabId)) btn.classList.add('active');
   });
 
   // Toggle mobile bottom nav active buttons
@@ -186,15 +194,34 @@ function switchTab(tabId) {
 
   // Toggle layouts
   document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
-  document.getElementById(`view-${tabId}`).classList.add('active');
+  const targetView = document.getElementById(`view-${tabId}`);
+  if (targetView) targetView.classList.add('active');
 
   // Update header title
   const formattedTitle = tabId.charAt(0).toUpperCase() + tabId.slice(1).replace('-', ' & ');
-  document.getElementById('current-view-title').innerText = formattedTitle;
+  const titleEl = document.getElementById('current-view-title');
+  if (titleEl) titleEl.innerText = formattedTitle;
 
   // Refresh tab-specific dynamic panels
   refreshActiveViewData(tabId);
 }
+
+// ==========================================
+// CLIENT-SIDE HASH ROUTER
+// ==========================================
+function handleRouting() {
+  const hash = window.location.hash || '#/dashboard';
+  const tabId = hash.replace('#/', '');
+  
+  const validTabs = ['dashboard', 'cashbooks', 'subscriptions', 'budgets-goals', 'reports', 'settings'];
+  if (validTabs.includes(tabId)) {
+    switchTab(tabId);
+  } else {
+    window.location.hash = '#/dashboard';
+  }
+}
+
+window.addEventListener('hashchange', handleRouting);
 
 // Refresh triggers
 function refreshActiveViewData(tabId) {
@@ -226,29 +253,40 @@ function refreshActiveViewData(tabId) {
 async function initializeDashboardData() {
   // Render user names
   if (appState.user) {
-    document.getElementById('user-display-name').innerText = appState.user.displayName;
+    const displayNameEl = document.getElementById('user-display-name');
+    if (displayNameEl) displayNameEl.innerText = appState.user.displayName;
     
     // Auth Detail text could contain email or a description
     const detail = appState.user.authDetail || appState.user.email || 'Offline Sandbox';
-    document.getElementById('user-auth-method').innerText = detail;
+    const authMethodEl = document.getElementById('user-auth-method');
+    if (authMethodEl) authMethodEl.innerText = detail;
     
     // Initials
     const avatarVal = appState.user.avatar || appState.user.displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    document.getElementById('avatar-letters').innerText = avatarVal || 'AL';
+    const avatarLettersEl = document.getElementById('avatar-letters');
+    if (avatarLettersEl) avatarLettersEl.innerText = avatarVal || 'AL';
   }
 
-  // Load datasets asynchronously from driver
-  appState.transactions = await window.StorageService.getTransactions();
-  appState.accounts = await window.StorageService.getAccounts();
-  appState.cashbooks = await window.StorageService.getCashbooks();
-  appState.budgets = await window.StorageService.getBudgets();
-  appState.goals = await window.StorageService.getGoals();
-  appState.subscriptions = await window.StorageService.getSubscriptions();
-  
-  const categories = await window.StorageService.getCategories();
+  // Load ALL datasets in parallel to achieve maximum efficiency and speed!
+  const [transactions, accounts, cashbooks, budgets, goals, subscriptions, categories, settings] = await Promise.all([
+    window.StorageService.getTransactions(),
+    window.StorageService.getAccounts(),
+    window.StorageService.getCashbooks(),
+    window.StorageService.getBudgets(),
+    window.StorageService.getGoals(),
+    window.StorageService.getSubscriptions(),
+    window.StorageService.getCategories(),
+    window.StorageService.getSettings()
+  ]);
+
+  appState.transactions = transactions;
+  appState.accounts = accounts;
+  appState.cashbooks = cashbooks;
+  appState.budgets = budgets;
+  appState.goals = goals;
+  appState.subscriptions = subscriptions;
   appState.categories = categories;
   
-  const settings = await window.StorageService.getSettings();
   appState.baseCurrency = settings.baseCurrency;
   appState.exchangeRates = settings.exchangeRates;
   
@@ -263,7 +301,8 @@ async function initializeDashboardData() {
   applyGeneralSettings();
 
   // Sync Base Currency dropdown default
-  document.getElementById('header-base-currency-select').value = appState.baseCurrency;
+  const baseCurrencySelect = document.getElementById('header-base-currency-select');
+  if (baseCurrencySelect) baseCurrencySelect.value = appState.baseCurrency;
 
   // Render current tab views
   switchTab(appState.currentTab);
@@ -1855,7 +1894,10 @@ window.addEventListener('DOMContentLoaded', () => {
   if (cachedUser) {
     appState.user = JSON.parse(cachedUser);
     hideAuthScreen();
-    initializeDashboardData();
+    initializeDashboardData().then(() => {
+      // Execute the router on load to mount the right page URL!
+      handleRouting();
+    });
   } else {
     // Directly show Email / Password form section on load
     const emailSec = document.getElementById('auth-sec-email');

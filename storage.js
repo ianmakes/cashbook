@@ -127,9 +127,15 @@ class StorageService {
     return result.secure_url; // HTTPS URL of the uploaded receipt
   }
 
+  static seededUserId = null;
+
   // Dynamic automatic seeding check
   static async checkAndSeedDatabase() {
     const userId = this.getUserId();
+    if (this.seededUserId === userId) {
+      return; // Already verified and seeded for this user in this session
+    }
+
     const accountsRef = db.collection("users").doc(userId).collection("accounts");
     const snapshot = await accountsRef.limit(1).get();
 
@@ -181,6 +187,8 @@ class StorageService {
 
       console.log("[StorageService] Cloud seeding completed successfully!");
     }
+
+    this.seededUserId = userId; // Cache verify success
   }
 
   // ==========================================
