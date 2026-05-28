@@ -1,0 +1,24 @@
+{
+  "short_name": "AuraLedger",
+  "name": "Aura Ledger - Modern Cash Book PWA",
+  "description": "An all-rounded premium cash book to track streams, budgets, goals, and subscriptions.",
+  "start_url": "./index.html",
+  "background_color": "#09090b",
+  "theme_color": "#7c3aed",
+  "display": "standalone",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='100' fill='%2309090b'/><circle cx='256' cy='256' r='180' stroke='%237c3aed' stroke-width='30' fill='none'/><path d='M256 120 V392 M160 256 H352' stroke='%2310b981' stroke-width='40' stroke-linecap='round'/></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%2309090b'/><circle cx='96' cy='96' r='60' stroke='%237c3aed' stroke-width='10' fill='none'/><path d='M96 45 V147 M55 96 H137' stroke='%2310b981' stroke-width='14' stroke-linecap='round'/></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
