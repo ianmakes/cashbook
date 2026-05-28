@@ -1162,10 +1162,34 @@ function applyGeneralSettings() {
   document.querySelectorAll('.dynamic-app-logo').forEach(el => {
     if (logo) {
       el.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: 24px; max-width: 120px; object-fit: contain; border-radius: 4px;">`;
+      el.style.display = 'inline-block';
     } else {
       el.innerHTML = `<i class="fa-solid fa-wallet" style="color: var(--primary);"></i>`;
+      el.style.display = 'inline-block';
     }
   });
+
+  // Specific Desktop Sidebar Top Logo & Name toggle logic
+  const sidebarLogoIcon = document.querySelector('.sidebar-logo .dynamic-app-logo');
+  const sidebarName = document.querySelector('.sidebar-logo .dynamic-app-name');
+  
+  if (sidebarName) {
+    if (logo) {
+      // If custom logo is set: show only the logo image (no app name text, default wallet is swapped)
+      if (sidebarLogoIcon) {
+        sidebarLogoIcon.style.display = 'inline-block';
+        sidebarLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: 28px; max-width: 180px; object-fit: contain; border-radius: 4px;">`;
+      }
+      sidebarName.style.display = 'none';
+    } else {
+      // If no custom logo is set: show app name text only (no default wallet icon, just the clean text)
+      if (sidebarLogoIcon) {
+        sidebarLogoIcon.style.display = 'none';
+        sidebarLogoIcon.innerHTML = '';
+      }
+      sidebarName.style.display = 'inline';
+    }
+  }
 
   // 4. CSS Variable Accent re-theming
   document.documentElement.style.setProperty('--primary', primaryColor);
