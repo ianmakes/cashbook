@@ -1191,6 +1191,28 @@ function applyGeneralSettings() {
     }
   }
 
+  // Specific Auth Overlay Logo & Name toggle logic
+  const authLogoIcon = document.querySelector('.auth-logo .dynamic-app-logo');
+  const authName = document.querySelector('.auth-logo .dynamic-app-name');
+  
+  if (authName) {
+    if (logo) {
+      // If custom logo is set: show only the logo image (no app name text, default wallet is swapped)
+      if (authLogoIcon) {
+        authLogoIcon.style.display = 'inline-block';
+        authLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: 36px; max-width: 220px; object-fit: contain; border-radius: 4px;">`;
+      }
+      authName.style.display = 'none';
+    } else {
+      // If no custom logo is set: show app name text only (no default wallet icon, just the clean text)
+      if (authLogoIcon) {
+        authLogoIcon.style.display = 'none';
+        authLogoIcon.innerHTML = '';
+      }
+      authName.style.display = 'inline';
+    }
+  }
+
   // 4. CSS Variable Accent re-theming
   document.documentElement.style.setProperty('--primary', primaryColor);
 }
