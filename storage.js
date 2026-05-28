@@ -1,33 +1,50 @@
-// storage.js - Async Storage Service for Aura Ledger
-// Future-proofed to swap directly with Firebase Firestore and Cloudinary SDKs
+// storage.js - Real-Time Asynchronous Firebase Firestore & Cloudinary Cloud Service Driver
 
-const DB_KEY = 'aura_ledger_db';
+// Firebase Configuration Credentials
+const firebaseConfig = {
+  apiKey: "AIzaSyB5BTaSVFNfNpJaZDreXXtQwIF7i_5vONg",
+  authDomain: "lvt-time.firebaseapp.com",
+  projectId: "lvt-time",
+  storageBucket: "lvt-time.firebasestorage.app",
+  messagingSenderId: "1042667873303",
+  appId: "1:1042667873303:web:629be0cf5e5adb15d92852"
+};
+
+// Initialize Firebase App
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.firestore();
+
+// Enable offline database caching persistence
+db.enablePersistence().catch((err) => {
+  console.warn("[Firestore Offline Persistence Warning]", err.code);
+});
 
 class StorageService {
-  // Simulates cloud service round-trip latency to ensure UI state transitions are tested
-  static async simulateDelay(ms = 200) {
+  // Simulates cloud service round-trip latency to ensure UI transitions are smooth
+  static async simulateDelay(ms = 100) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
-  // Get raw JSON Database state
-  static _getRawDb() {
-    let raw = localStorage.getItem(DB_KEY);
-    if (!raw) {
-      // Seed default data if local storage is empty
-      localStorage.setItem(DB_KEY, JSON.stringify(window.DEFAULT_DATA));
-      raw = localStorage.stringify ? localStorage.getItem(DB_KEY) : JSON.stringify(window.DEFAULT_DATA);
+  // Resolves the active user path scope (defaults to super user uid)
+  static getUserId() {
+    if (window.appState && window.appState.user && window.appState.user.uid) {
+      return window.appState.user.uid;
     }
-    return JSON.parse(raw);
+    return "TfrXL9CA6OThoRUAnsJInIHKPpx2"; // Default Super User UID
   }
 
-  // Save raw JSON Database state
-  static _saveRawDb(db) {
-    localStorage.setItem(DB_KEY, JSON.stringify(db));
+  // Native Web Crypto API SHA-1 Hasher for Cloudinary Upload Signatures
+  static async hashSha1(string) {
+    const utf8 = new TextEncoder().encode(string);
+    const hashBuffer = await crypto.subtle.digest("SHA-1", utf8);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    return hashHex;
   }
 
-  // HTML5 canvas receipt image compressor
-  // Compresses high-res camera uploads (~2MB-10MB) to highly compact JPGs (~30KB-50KB)
-  // Ready to plug in Cloudinary upload API here in the future
+  // HTML5 canvas receipt compressor + secure Cloudinary signed uploader
   static async compressReceipt(file) {
     return new Promise((resolve, reject) => {
       if (!file) return resolve(null);
@@ -35,8 +52,8 @@ class StorageService {
       const reader = new FileReader();
       reader.onload = (event) => {
         const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
           let width = img.width;
           let height = img.height;
 
@@ -56,75 +73,179 @@ class StorageService {
 
           canvas.width = width;
           canvas.height = height;
-          const ctx = canvas.getContext('2d');
+          const ctx = canvas.getContext("2d");
           ctx.drawImage(img, 0, 0, width, height);
 
           // Compress to standard JPEG format with 0.65 quality compression
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.65);
-          resolve(compressedBase64);
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.65);
+          
+          try {
+            // Upload directly to Cloudinary using signed signature
+            const url = await StorageService.uploadToCloudinary(compressedBase64);
+            resolve(url);
+          } catch (err) {
+            console.error("[StorageService Cloudinary Upload Error]", err);
+            reject(err);
+          }
         };
-        img.onerror = () => reject(new Error('Failed to load image file.'));
+        img.onerror = () => reject(new Error("Failed to load image file."));
         img.src = event.target.result;
       };
-      reader.onerror = () => reject(new Error('Failed to read image file.'));
+      reader.onerror = () => reject(new Error("Failed to read image file."));
       reader.readAsDataURL(file);
     });
+  }
+
+  // Secure Signed Cloudinary Image Uploader (Direct Client REST Post)
+  static async uploadToCloudinary(base64Image) {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+    const apiKey = "848866199679944";
+    const apiSecret = "F7gd5v8m_baVRhjkIW0-KPklYgw";
+    const cloudName = "dl3ee8etw";
+
+    // Sorted alphabetically: timestamp={timestamp} + appSecret
+    const stringToSign = `timestamp=${timestamp}${apiSecret}`;
+    const signature = await this.hashSha1(stringToSign);
+
+    const formData = new FormData();
+    formData.append("file", base64Image);
+    formData.append("api_key", apiKey);
+    formData.append("timestamp", timestamp);
+    formData.append("signature", signature);
+
+    const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+      method: "POST",
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(`Cloudinary upload failed: ${errData.error?.message || response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.secure_url; // HTTPS URL of the uploaded receipt
+  }
+
+  // Dynamic automatic seeding check
+  static async checkAndSeedDatabase() {
+    const userId = this.getUserId();
+    const accountsRef = db.collection("users").doc(userId).collection("accounts");
+    const snapshot = await accountsRef.limit(1).get();
+
+    if (snapshot.empty) {
+      console.log(`[StorageService] Firestore empty for user ${userId}. Seeding DEFAULT_DATA...`);
+      const seed = window.DEFAULT_DATA;
+
+      // Seed 1. Accounts
+      for (const acc of seed.accounts) {
+        await accountsRef.doc(acc.id).set(acc);
+      }
+
+      // Seed 2. Streams (Cashbooks)
+      const cbRef = db.collection("users").doc(userId).collection("cashbooks");
+      for (const cb of seed.cashbooks) {
+        await cbRef.doc(cb.id).set(cb);
+      }
+
+      // Seed 3. Transactions
+      const txRef = db.collection("users").doc(userId).collection("transactions");
+      for (const tx of seed.transactions) {
+        await txRef.doc(tx.id).set({
+          ...tx,
+          amount: parseFloat(tx.amount)
+        });
+      }
+
+      // Seed 4. Budgets
+      const bgRef = db.collection("users").doc(userId).collection("budgets");
+      for (const bg of seed.budgets) {
+        await bgRef.doc(bg.id).set(bg);
+      }
+
+      // Seed 5. Savings Goals
+      const glRef = db.collection("users").doc(userId).collection("goals");
+      for (const gl of seed.goals) {
+        await glRef.doc(gl.id).set(gl);
+      }
+
+      // Seed 6. Subscriptions
+      const subRef = db.collection("users").doc(userId).collection("subscriptions");
+      for (const s of seed.subscriptions) {
+        await subRef.doc(s.id).set(s);
+      }
+
+      // Seed 7. Metadata (Categories Cloud & Exchange Rates configs)
+      await db.collection("users").doc(userId).collection("metadata").doc("categories").set(seed.categories);
+      await db.collection("users").doc(userId).collection("metadata").doc("settings").set(seed.settings);
+
+      console.log("[StorageService] Cloud seeding completed successfully!");
+    }
   }
 
   // ==========================================
   // TRANSACTION SERVICE METHODS
   // ==========================================
   static async getTransactions() {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    return db.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    await this.checkAndSeedDatabase();
+    const userId = this.getUserId();
+    const snapshot = await db.collection("users").doc(userId).collection("transactions").get();
+    const txs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return txs.sort((a, b) => new Date(b.date) - new Date(a.date));
   }
 
   static async addTransaction(transaction) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    
-    // Add unique transaction id and timestamp
+    const userId = this.getUserId();
+    const txId = `tx-${Date.now()}`;
     const newTx = {
       ...transaction,
-      id: `tx-${Date.now()}`,
+      id: txId,
       amount: parseFloat(transaction.amount)
     };
 
-    db.transactions.push(newTx);
+    // Save transaction to cloud Firestore
+    await db.collection("users").doc(userId).collection("transactions").doc(txId).set(newTx);
 
-    // Adjust Account Balance corresponding to income or expense
-    const account = db.accounts.find(a => a.id === transaction.accountId);
-    if (account) {
-      if (transaction.type === 'income') {
-        account.balance += newTx.amount;
+    // Adjust corresponding Account Balance in Firestore
+    const accountRef = db.collection("users").doc(userId).collection("accounts").doc(transaction.accountId);
+    const accountDoc = await accountRef.get();
+    if (accountDoc.exists) {
+      const account = accountDoc.data();
+      let newBalance = parseFloat(account.balance || 0);
+      if (transaction.type === "income") {
+        newBalance += newTx.amount;
       } else {
-        account.balance -= newTx.amount;
+        newBalance -= newTx.amount;
       }
+      await accountRef.update({ balance: newBalance });
     }
 
-    this._saveRawDb(db);
     return newTx;
   }
 
   static async deleteTransaction(txId) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    const txIndex = db.transactions.findIndex(t => t.id === txId);
-    
-    if (txIndex !== -1) {
-      const tx = db.transactions[txIndex];
-      // Reverse Account Balance adjustment
-      const account = db.accounts.find(a => a.id === tx.accountId);
-      if (account) {
-        if (tx.type === 'income') {
-          account.balance -= tx.amount;
+    const userId = this.getUserId();
+    const txRef = db.collection("users").doc(userId).collection("transactions").doc(txId);
+    const txDoc = await txRef.get();
+
+    if (txDoc.exists) {
+      const tx = txDoc.data();
+      
+      // Reverse Account Balance adjustment in Firestore
+      const accountRef = db.collection("users").doc(userId).collection("accounts").doc(tx.accountId);
+      const accountDoc = await accountRef.get();
+      if (accountDoc.exists) {
+        const account = accountDoc.data();
+        let newBalance = parseFloat(account.balance || 0);
+        if (tx.type === "income") {
+          newBalance -= tx.amount;
         } else {
-          account.balance += tx.amount;
+          newBalance += tx.amount;
         }
+        await accountRef.update({ balance: newBalance });
       }
-      db.transactions.splice(txIndex, 1);
-      this._saveRawDb(db);
+
+      await txRef.delete();
       return true;
     }
     return false;
@@ -134,29 +255,26 @@ class StorageService {
   // CASHBOOK (INCOME STREAM) SERVICE METHODS
   // ==========================================
   static async getCashbooks() {
-    await this.simulateDelay(100);
-    const db = this._getRawDb();
-    return db.cashbooks;
+    await this.checkAndSeedDatabase();
+    const userId = this.getUserId();
+    const snapshot = await db.collection("users").doc(userId).collection("cashbooks").get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
   static async addCashbook(cashbook) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
+    const userId = this.getUserId();
+    const cbId = `cb-${Date.now()}`;
     const newCb = {
       ...cashbook,
-      id: `cb-${Date.now()}`
+      id: cbId
     };
-    db.cashbooks.push(newCb);
-    this._saveRawDb(db);
+    await db.collection("users").doc(userId).collection("cashbooks").doc(cbId).set(newCb);
     return newCb;
   }
 
   static async deleteCashbook(cbId) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    db.cashbooks = db.cashbooks.filter(c => c.id !== cbId);
-    // Keep transactions associated but marked general or deleted if needed. We keep transactions.
-    this._saveRawDb(db);
+    const userId = this.getUserId();
+    await db.collection("users").doc(userId).collection("cashbooks").doc(cbId).delete();
     return true;
   }
 
@@ -164,29 +282,27 @@ class StorageService {
   // ACCOUNT (CURRENCY ACCOUNT) SERVICE METHODS
   // ==========================================
   static async getAccounts() {
-    await this.simulateDelay(100);
-    const db = this._getRawDb();
-    return db.accounts;
+    await this.checkAndSeedDatabase();
+    const userId = this.getUserId();
+    const snapshot = await db.collection("users").doc(userId).collection("accounts").get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
   static async addAccount(account) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
+    const userId = this.getUserId();
+    const accId = `acc-${Date.now()}`;
     const newAcc = {
       ...account,
-      id: `acc-${Date.now()}`,
+      id: accId,
       balance: parseFloat(account.balance || 0)
     };
-    db.accounts.push(newAcc);
-    this._saveRawDb(db);
+    await db.collection("users").doc(userId).collection("accounts").doc(accId).set(newAcc);
     return newAcc;
   }
 
   static async deleteAccount(accId) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    db.accounts = db.accounts.filter(a => a.id !== accId);
-    this._saveRawDb(db);
+    const userId = this.getUserId();
+    await db.collection("users").doc(userId).collection("accounts").doc(accId).delete();
     return true;
   }
 
@@ -194,29 +310,27 @@ class StorageService {
   // BUDGET SERVICE METHODS
   // ==========================================
   static async getBudgets() {
-    await this.simulateDelay(100);
-    const db = this._getRawDb();
-    return db.budgets;
+    await this.checkAndSeedDatabase();
+    const userId = this.getUserId();
+    const snapshot = await db.collection("users").doc(userId).collection("budgets").get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
   static async addBudget(budget) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
+    const userId = this.getUserId();
+    const bgId = `bg-${Date.now()}`;
     const newBg = {
       ...budget,
-      id: `bg-${Date.now()}`,
+      id: bgId,
       limit: parseFloat(budget.limit)
     };
-    db.budgets.push(newBg);
-    this._saveRawDb(db);
+    await db.collection("users").doc(userId).collection("budgets").doc(bgId).set(newBg);
     return newBg;
   }
 
   static async deleteBudget(bgId) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    db.budgets = db.budgets.filter(b => b.id !== bgId);
-    this._saveRawDb(db);
+    const userId = this.getUserId();
+    await db.collection("users").doc(userId).collection("budgets").doc(bgId).delete();
     return true;
   }
 
@@ -224,46 +338,42 @@ class StorageService {
   // SAVINGS GOALS SERVICE METHODS
   // ==========================================
   static async getGoals() {
-    await this.simulateDelay(100);
-    const db = this._getRawDb();
-    return db.goals;
+    await this.checkAndSeedDatabase();
+    const userId = this.getUserId();
+    const snapshot = await db.collection("users").doc(userId).collection("goals").get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
   static async addGoal(goal) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
+    const userId = this.getUserId();
+    const glId = `gl-${Date.now()}`;
     const newGl = {
       ...goal,
-      id: `gl-${Date.now()}`,
+      id: glId,
       target: parseFloat(goal.target),
       current: parseFloat(goal.current || 0)
     };
-    db.goals.push(newGl);
-    this._saveRawDb(db);
+    await db.collection("users").doc(userId).collection("goals").doc(glId).set(newGl);
     return newGl;
   }
 
   static async updateGoalContribution(goalId, contributionAmount) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    const goal = db.goals.find(g => g.id === goalId);
-    if (goal) {
-      const parsedAmount = parseFloat(contributionAmount);
-      goal.current += parsedAmount;
+    const userId = this.getUserId();
+    const goalRef = db.collection("users").doc(userId).collection("goals").doc(goalId);
+    const goalDoc = await goalRef.get();
 
-      // Automatically log as an expense (Saving Contribution) under the default USD or corresponding account
-      // to keep overall ledger accurate if desired
-      this._saveRawDb(db);
-      return goal;
+    if (goalDoc.exists) {
+      const goal = goalDoc.data();
+      const newCurrent = parseFloat(goal.current || 0) + parseFloat(contributionAmount);
+      await goalRef.update({ current: newCurrent });
+      return { ...goal, current: newCurrent };
     }
     return null;
   }
 
   static async deleteGoal(glId) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    db.goals = db.goals.filter(g => g.id !== glId);
-    this._saveRawDb(db);
+    const userId = this.getUserId();
+    await db.collection("users").doc(userId).collection("goals").doc(glId).delete();
     return true;
   }
 
@@ -271,29 +381,27 @@ class StorageService {
   // SUBSCRIPTIONS SERVICE METHODS
   // ==========================================
   static async getSubscriptions() {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    return db.subscriptions;
+    await this.checkAndSeedDatabase();
+    const userId = this.getUserId();
+    const snapshot = await db.collection("users").doc(userId).collection("subscriptions").get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   }
 
   static async addSubscription(subscription) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
+    const userId = this.getUserId();
+    const subId = `sub-${Date.now()}`;
     const newSub = {
       ...subscription,
-      id: `sub-${Date.now()}`,
+      id: subId,
       amount: parseFloat(subscription.amount)
     };
-    db.subscriptions.push(newSub);
-    this._saveRawDb(db);
+    await db.collection("users").doc(userId).collection("subscriptions").doc(subId).set(newSub);
     return newSub;
   }
 
   static async deleteSubscription(subId) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    db.subscriptions = db.subscriptions.filter(s => s.id !== subId);
-    this._saveRawDb(db);
+    const userId = this.getUserId();
+    await db.collection("users").doc(userId).collection("subscriptions").doc(subId).delete();
     return true;
   }
 
@@ -301,52 +409,107 @@ class StorageService {
   // SETTINGS & BACKUP SERVICE METHODS
   // ==========================================
   static async getSettings() {
-    await this.simulateDelay(50);
-    const db = this._getRawDb();
-    return db.settings;
+    await this.checkAndSeedDatabase();
+    const userId = this.getUserId();
+    const doc = await db.collection("users").doc(userId).collection("metadata").doc("settings").get();
+    return doc.exists ? doc.data() : window.DEFAULT_DATA.settings;
   }
 
   static async updateSettings(newSettings) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    db.settings = {
-      ...db.settings,
-      ...newSettings
-    };
-    this._saveRawDb(db);
-    return db.settings;
+    const userId = this.getUserId();
+    const docRef = db.collection("users").doc(userId).collection("metadata").doc("settings");
+    const doc = await docRef.get();
+    const current = doc.exists ? doc.data() : window.DEFAULT_DATA.settings;
+    const updated = { ...current, ...newSettings };
+    await docRef.set(updated);
+    return updated;
   }
 
   static async getCategories() {
-    await this.simulateDelay(50);
-    const db = this._getRawDb();
-    return db.categories;
+    await this.checkAndSeedDatabase();
+    const userId = this.getUserId();
+    const doc = await db.collection("users").doc(userId).collection("metadata").doc("categories").get();
+    return doc.exists ? doc.data() : window.DEFAULT_DATA.categories;
   }
 
   static async addCategory(type, categoryName) {
-    await this.simulateDelay();
-    const db = this._getRawDb();
-    if (type === 'income' && !db.categories.income.includes(categoryName)) {
-      db.categories.income.push(categoryName);
-    } else if (type === 'expense' && !db.categories.expense.includes(categoryName)) {
-      db.categories.expense.push(categoryName);
+    const userId = this.getUserId();
+    const docRef = db.collection("users").doc(userId).collection("metadata").doc("categories");
+    const doc = await docRef.get();
+    const categories = doc.exists ? doc.data() : window.DEFAULT_DATA.categories;
+
+    if (type === "income" && !categories.income.includes(categoryName)) {
+      categories.income.push(categoryName);
+    } else if (type === "expense" && !categories.expense.includes(categoryName)) {
+      categories.expense.push(categoryName);
     }
-    this._saveRawDb(db);
-    return db.categories;
+
+    await docRef.set(categories);
+    return categories;
   }
 
   static async exportBackup() {
-    await this.simulateDelay();
-    return JSON.stringify(this._getRawDb(), null, 2);
+    const state = {
+      transactions: await this.getTransactions(),
+      accounts: await this.getAccounts(),
+      cashbooks: await this.getCashbooks(),
+      budgets: await this.getBudgets(),
+      goals: await this.getGoals(),
+      subscriptions: await this.getSubscriptions(),
+      categories: await this.getCategories(),
+      settings: await this.getSettings()
+    };
+    return JSON.stringify(state, null, 2);
   }
 
   static async importBackup(backupJsonString) {
-    await this.simulateDelay();
     try {
       const parsed = JSON.parse(backupJsonString);
-      // Validate core structural properties
       if (parsed.transactions && parsed.accounts && parsed.cashbooks && parsed.settings) {
-        this._saveRawDb(parsed);
+        const userId = this.getUserId();
+        const batch = firebase.firestore().batch();
+
+        // 1. Overwrite accounts
+        const accountsRef = db.collection("users").doc(userId).collection("accounts");
+        for (const acc of parsed.accounts) {
+          batch.set(accountsRef.doc(acc.id), acc);
+        }
+        
+        // 2. Overwrite cashbooks
+        const cbRef = db.collection("users").doc(userId).collection("cashbooks");
+        for (const cb of parsed.cashbooks) {
+          batch.set(cbRef.doc(cb.id), cb);
+        }
+        
+        // 3. Overwrite transactions
+        const txRef = db.collection("users").doc(userId).collection("transactions");
+        for (const tx of parsed.transactions) {
+          batch.set(txRef.doc(tx.id), tx);
+        }
+        
+        // 4. Overwrite budgets
+        const bgRef = db.collection("users").doc(userId).collection("budgets");
+        for (const bg of (parsed.budgets || [])) {
+          batch.set(bgRef.doc(bg.id), bg);
+        }
+        
+        // 5. Overwrite savings goals
+        const glRef = db.collection("users").doc(userId).collection("goals");
+        for (const gl of (parsed.goals || [])) {
+          batch.set(glRef.doc(gl.id), gl);
+        }
+        
+        // 6. Overwrite subscriptions
+        const subRef = db.collection("users").doc(userId).collection("subscriptions");
+        for (const s of (parsed.subscriptions || [])) {
+          batch.set(subRef.doc(s.id), s);
+        }
+
+        // Overwrite metadata
+        batch.set(db.collection("users").doc(userId).collection("metadata").doc("categories"), parsed.categories || window.DEFAULT_DATA.categories);
+        batch.set(db.collection("users").doc(userId).collection("metadata").doc("settings"), parsed.settings || window.DEFAULT_DATA.settings);
+
+        await batch.commit();
         return true;
       }
       return false;
