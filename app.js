@@ -972,6 +972,21 @@ function renderSettingsTab() {
   // 3. Compute Database Size
   const sizeKb = (new Blob([localStorage.getItem('aura_ledger_db') || '']).size / 1024).toFixed(2);
   document.getElementById('database-storage-size').innerText = `${sizeKb} KB`;
+
+  // 4. Default Settings Sub-tab to Profile
+  switchSettingsTab('profile');
+}
+
+function switchSettingsTab(tabId) {
+  // Hide all settings sections
+  document.querySelectorAll('.settings-section-view').forEach(sec => sec.style.display = 'none');
+  
+  // Show target settings section
+  document.getElementById(`settings-sec-${tabId}`).style.display = 'block';
+  
+  // Update settings tabs active styling
+  document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById(`settings-tab-${tabId}`).classList.add('active');
 }
 
 async function handleProfileSettingsSubmit(event) {
