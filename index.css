@@ -188,6 +188,18 @@ body.theme-light .auth-overlay::before {
   position: relative;
   overflow: hidden;
   z-index: 10;
+  
+  /* Prevent Flash of Unbranded Content (FOUC) */
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.96);
+  transition: opacity 0.3s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.auth-card.visible {
+  opacity: 1;
+  pointer-events: all;
+  transform: scale(1);
 }
 
 body.theme-light .auth-card {

@@ -172,9 +172,15 @@ function logout() {
 function switchTab(tabId) {
   // If hash routing is not set to this tab, update it and return.
   // Let the popstate/hashchange event call switchTab securely.
-  if (window.location.hash !== `#/${tabId}`) {
-    window.location.hash = `#/${tabId}`;
-    return;
+  if (tabId === 'dashboard') {
+    if (window.location.hash !== '') {
+      history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    }
+  } else {
+    if (window.location.hash !== `#/${tabId}`) {
+      window.location.hash = `#/${tabId}`;
+      return;
+    }
   }
 
   appState.currentTab = tabId;
@@ -207,17 +213,28 @@ function switchTab(tabId) {
 }
 
 // ==========================================
-// CLIENT-SIDE HASH ROUTER
+// CLIENT-SIDE HASH ROUTER (Dashboard as Index)
 // ==========================================
 function handleRouting() {
-  const hash = window.location.hash || '#/dashboard';
-  const tabId = hash.replace('#/', '');
+  const hash = window.location.hash;
   
+  // Dashboard is the primary index route (empty hash or #/dashboard)
+  if (!hash || hash === '#' || hash === '#/' || hash === '#/dashboard') {
+    if (hash !== '') {
+      history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    }
+    switchTab('dashboard');
+    return;
+  }
+  
+  const tabId = hash.replace('#/', '');
   const validTabs = ['dashboard', 'cashbooks', 'subscriptions', 'budgets-goals', 'reports', 'settings'];
   if (validTabs.includes(tabId)) {
     switchTab(tabId);
   } else {
-    window.location.hash = '#/dashboard';
+    // Fallback to index route
+    history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    switchTab('dashboard');
   }
 }
 
@@ -1947,8 +1964,15 @@ window.addEventListener('DOMContentLoaded', () => {
     appState.appLogo = settings.appLogo || '';
     appState.appPrimaryColor = settings.appPrimaryColor || '#FCD535';
     applyGeneralSettings();
+    
+    // Reveal the login card beautifully once branding is fully applied
+    const authCard = document.querySelector('.auth-card');
+    if (authCard) authCard.classList.add('visible');
   }).catch(err => {
     console.warn('[Branding] Failed to fetch initial branding settings:', err);
+    // Even if settings fail, make the login card visible so the user can sign in
+    const authCard = document.querySelector('.auth-card');
+    if (authCard) authCard.classList.add('visible');
   });
 
   // 3. Check if a cached user session exists, bypassing or loading Auth overlay
