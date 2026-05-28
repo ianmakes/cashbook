@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Aura Ledger - Premium Cash Book</title>
+  <title id="app-title-tag">Aura Ledger - Premium Cash Book</title>
+  <meta name="description" id="app-meta-description" content="Secure, Modern Cash Book & Wealth Tracker">
   
   <!-- PWA Headers -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#7c3aed">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link id="app-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%2309090b'/><circle cx='96' cy='96' r='60' stroke='%237c3aed' stroke-width='10' fill='none'/></svg>">
   <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%2309090b'/><circle cx='96' cy='96' r='60' stroke='%237c3aed' stroke-width='10' fill='none'/></svg>">
 
   <!-- FontAwesome for Premium Icons -->
@@ -34,10 +36,10 @@
   <div id="auth-overlay" class="auth-overlay">
     <div class="auth-card">
       <div class="auth-logo">
-        <i class="fa-solid fa-wallet" style="color: var(--primary);"></i>
-        <span>AURA <span>LEDGER</span></span>
+        <span class="dynamic-app-logo"><i class="fa-solid fa-wallet" style="color: var(--primary);"></i></span>
+        <span class="dynamic-app-name">AURA <span>LEDGER</span></span>
       </div>
-      <p class="auth-subtitle">Secure, Modern Cash Book & Wealth Tracker</p>
+      <p class="auth-subtitle" id="dynamic-auth-subtitle">Secure, Modern Cash Book & Wealth Tracker</p>
 
       <div class="auth-tabs">
         <button id="tab-google" class="auth-tab-btn active" onclick="switchAuthTab('google')">Google</button>
@@ -124,8 +126,8 @@
     <!-- DESKTOP SIDEBAR -->
     <aside class="sidebar">
       <div class="sidebar-logo">
-        <i class="fa-solid fa-wallet" style="color: var(--primary);"></i>
-        <span>AURA <span>LEDGER</span></span>
+        <span class="dynamic-app-logo"><i class="fa-solid fa-wallet" style="color: var(--primary);"></i></span>
+        <span class="dynamic-app-name">AURA <span>LEDGER</span></span>
       </div>
       
       <ul class="nav-links">
@@ -525,7 +527,10 @@
           
           <!-- Tabbed Navigation Bar -->
           <div class="settings-tabs">
-            <button id="settings-tab-profile" class="settings-tab-btn active" onclick="switchSettingsTab('profile')">
+            <button id="settings-tab-general" class="settings-tab-btn active" onclick="switchSettingsTab('general')">
+              <i class="fa-solid fa-sliders"></i> General Settings
+            </button>
+            <button id="settings-tab-profile" class="settings-tab-btn" onclick="switchSettingsTab('profile')">
               <i class="fa-solid fa-user-gear"></i> Profile
             </button>
             <button id="settings-tab-currency" class="settings-tab-btn" onclick="switchSettingsTab('currency')">
@@ -539,8 +544,113 @@
             </button>
           </div>
 
+          <!-- Section 0: General Settings -->
+          <div id="settings-sec-general" class="settings-section-view">
+            <div class="panel-card">
+              <h3 style="font-size: 16px; font-weight:700; margin-bottom: 10px;">
+                <i class="fa-solid fa-sliders" style="color: var(--primary); margin-right: 6px;"></i> General App Settings
+              </h3>
+              <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 20px;">
+                Configure the branding, identity, favicon, logo, and active color palette of your personalized ledger application.
+              </p>
+              
+              <form id="general-settings-form" onsubmit="handleGeneralSettingsSubmit(event)" style="display: flex; flex-direction: column; gap: 24px;">
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+                  <!-- App Name -->
+                  <div>
+                    <label class="form-label" for="gen-name-input">App Name</label>
+                    <input type="text" id="gen-name-input" class="input-field" placeholder="Aura Ledger" required>
+                  </div>
+                  
+                  <!-- App Description -->
+                  <div>
+                    <label class="form-label" for="gen-desc-input">App Description</label>
+                    <input type="text" id="gen-desc-input" class="input-field" placeholder="Secure, Modern Cash Book & Wealth Tracker" required>
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
+                  <!-- App Logo File Uploader -->
+                  <div>
+                    <label class="form-label">App Logo (Image)</label>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+                      <div id="gen-logo-preview-box" style="width: 50px; height: 50px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; background: var(--bg-surface-elevated); overflow: hidden;">
+                        <i class="fa-solid fa-wallet" style="font-size: 20px; color: var(--primary);"></i>
+                      </div>
+                      <div style="flex: 1;">
+                        <label class="camera-trigger-label" style="display: inline-flex; width: auto; font-size: 12px; padding: 8px 14px; gap: 6px; cursor: pointer; border-radius: 6px;">
+                          <i class="fa-solid fa-image"></i> Choose Logo Image
+                          <input type="file" id="gen-logo-file" accept="image/*" style="display: none;" onchange="handleGeneralLogoUpload(this)">
+                        </label>
+                        <input type="hidden" id="gen-logo-url-input" value="">
+                        <div id="logo-upload-loading" style="font-size: 10px; color: var(--primary); margin-top: 4px; display: none;">
+                          <i class="fa-solid fa-spinner fa-spin"></i> Uploading to Cloudinary...
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- App Favicon File Uploader -->
+                  <div>
+                    <label class="form-label">App Favicon (.ico, .png, .svg)</label>
+                    <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+                      <div id="gen-favicon-preview-box" style="width: 50px; height: 50px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; background: var(--bg-surface-elevated); overflow: hidden;">
+                        <i class="fa-solid fa-star" style="font-size: 20px; color: var(--primary);"></i>
+                      </div>
+                      <div style="flex: 1;">
+                        <label class="camera-trigger-label" style="display: inline-flex; width: auto; font-size: 12px; padding: 8px 14px; gap: 6px; cursor: pointer; border-radius: 6px;">
+                          <i class="fa-solid fa-upload"></i> Choose Favicon
+                          <input type="file" id="gen-favicon-file" accept="image/*" style="display: none;" onchange="handleGeneralFaviconUpload(this)">
+                        </label>
+                        <input type="hidden" id="gen-favicon-url-input" value="">
+                        <div id="favicon-upload-loading" style="font-size: 10px; color: var(--primary); margin-top: 4px; display: none;">
+                          <i class="fa-solid fa-spinner fa-spin"></i> Uploading to Cloudinary...
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Theme Primary Color Selection -->
+                <div style="border-top: 1px solid var(--border-color); padding-top: 20px;">
+                  <label class="form-label" style="margin-bottom: 12px;">App Primary Accent Color</label>
+                  <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">
+                    Select or enter a custom hex color to dynamically re-theme all highlights, active states, and accents across the application.
+                  </p>
+                  
+                  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px;">
+                    <!-- Color Picker + Hex Input Container -->
+                    <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-surface-elevated); border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 6px; width: max-content;">
+                      <input type="color" id="gen-color-picker" value="#FCD535" style="border: none; background: transparent; cursor: pointer; width: 36px; height: 32px; padding: 0;" oninput="syncColorPickerToText(this.value)">
+                      <input type="text" id="gen-color-hex" class="input-field" value="#FCD535" placeholder="#FCD535" style="width: 90px; border: none; background: transparent; padding: 0 4px; font-family: 'JetBrains Mono', monospace; font-size: 13px;" oninput="syncColorTextToPicker(this.value)">
+                    </div>
+
+                    <!-- Preset Badges -->
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;" id="color-presets-container">
+                      <button type="button" class="color-preset-btn active" style="background: #FCD535; width: 28px; height: 28px; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 8px var(--primary); cursor: pointer;" onclick="selectColorPreset('#FCD535')" title="Binance Yellow"></button>
+                      <button type="button" class="color-preset-btn" style="background: #7c3aed; width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;" onclick="selectColorPreset('#7c3aed')" title="Purple"></button>
+                      <button type="button" class="color-preset-btn" style="background: #10b981; width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;" onclick="selectColorPreset('#10b981')" title="Emerald"></button>
+                      <button type="button" class="color-preset-btn" style="background: #0ea5e9; width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;" onclick="selectColorPreset('#0ea5e9')" title="Sky Blue"></button>
+                      <button type="button" class="color-preset-btn" style="background: #f43f5e; width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;" onclick="selectColorPreset('#f43f5e')" title="Rose"></button>
+                      <button type="button" class="color-preset-btn" style="background: #f97316; width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer;" onclick="selectColorPreset('#f97316')" title="Orange"></button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Submit Action Button -->
+                <div style="border-top: 1px solid var(--border-color); padding-top: 20px; display: flex; justify-content: flex-end;">
+                  <button type="submit" class="goal-contrib-btn" style="padding: 10px 24px; font-size: 13px;">
+                    <i class="fa-solid fa-circle-check" style="margin-right: 6px;"></i> Save & Apply General Branding
+                  </button>
+                </div>
+                
+              </form>
+            </div>
+          </div>
+
           <!-- Section 1: Profile Settings -->
-          <div id="settings-sec-profile" class="settings-section-view">
+          <div id="settings-sec-profile" class="settings-section-view" style="display: none;">
             <div class="panel-card">
               <h3 style="font-size: 16px; font-weight:700; margin-bottom: 10px;"><i class="fa-solid fa-user-gear" style="color: var(--primary); margin-right: 6px;"></i> User Profile Settings</h3>
               <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">
@@ -678,10 +788,10 @@
       <!-- Premium Marketing Inverted Footer -->
       <footer class="marketing-footer">
         <div class="marketing-footer-left">
-          <div class="marketing-footer-logo">
+          <div class="marketing-footer-logo" id="dynamic-footer-logo">
             AURA <span>LEDGER</span>
           </div>
-          <div style="font-size: 11px; margin-top: 4px;">Premium Real-Time Ledger & Multi-Currency PWA</div>
+          <div style="font-size: 11px; margin-top: 4px;" id="dynamic-footer-desc">Premium Real-Time Ledger & Multi-Currency PWA</div>
         </div>
         <div class="marketing-footer-right">
           <a href="#" onclick="switchTab('dashboard')">Dashboard</a>

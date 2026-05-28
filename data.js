@@ -148,7 +148,12 @@ const DEFAULT_DATA = {
       GBP: 165.0,   // 1 GBP = 165 KES
       KES: 1.0,     // 1 KES = 1 KES
       JPY: 0.85     // 1 JPY = 0.85 KES
-    }
+    },
+    appName: 'Aura Ledger',
+    appDescription: 'Secure, Modern Cash Book & Wealth Tracker',
+    appFavicon: '',
+    appLogo: '',
+    appPrimaryColor: '#FCD535'
   }
 };
 

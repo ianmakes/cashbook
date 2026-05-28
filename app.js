@@ -265,6 +265,16 @@ async function initializeDashboardData() {
   const settings = await window.StorageService.getSettings();
   appState.baseCurrency = settings.baseCurrency;
   appState.exchangeRates = settings.exchangeRates;
+  
+  // Custom dynamic branding properties
+  appState.appName = settings.appName || 'Aura Ledger';
+  appState.appDescription = settings.appDescription || 'Secure, Modern Cash Book & Wealth Tracker';
+  appState.appFavicon = settings.appFavicon || '';
+  appState.appLogo = settings.appLogo || '';
+  appState.appPrimaryColor = settings.appPrimaryColor || '#FCD535';
+
+  // Apply dynamic settings globally in real time
+  applyGeneralSettings();
 
   // Sync Base Currency dropdown default
   document.getElementById('header-base-currency-select').value = appState.baseCurrency;
@@ -967,11 +977,48 @@ function initializeCharts() {
 // ==========================================
 // VIEW RENDERING: SETTINGS TAB
 // ==========================================
-function renderSettingsTab() {
-  // 0. Populate User Profile settings input values from session state
+function loadSettingsPage() {
+  // Populate General Settings fields
+  document.getElementById('gen-name-input').value = appState.appName || 'Aura Ledger';
+  document.getElementById('gen-desc-input').value = appState.appDescription || 'Secure, Modern Cash Book & Wealth Tracker';
+  document.getElementById('gen-logo-url-input').value = appState.appLogo || '';
+  document.getElementById('gen-favicon-url-input').value = appState.appFavicon || '';
+  document.getElementById('gen-color-hex').value = appState.appPrimaryColor || '#FCD535';
+  document.getElementById('gen-color-picker').value = appState.appPrimaryColor || '#FCD535';
+
+  // Load preview images or icons
+  const logoPreviewBox = document.getElementById('gen-logo-preview-box');
+  if (appState.appLogo) {
+    logoPreviewBox.innerHTML = `<img src="${appState.appLogo}" style="width: 100%; height: 100%; object-fit: contain;">`;
+  } else {
+    logoPreviewBox.innerHTML = `<i class="fa-solid fa-wallet" style="font-size: 20px; color: var(--primary);"></i>`;
+  }
+
+  const faviconPreviewBox = document.getElementById('gen-favicon-preview-box');
+  if (appState.appFavicon) {
+    faviconPreviewBox.innerHTML = `<img src="${appState.appFavicon}" style="width: 100%; height: 100%; object-fit: contain;">`;
+  } else {
+    faviconPreviewBox.innerHTML = `<i class="fa-solid fa-star" style="font-size: 20px; color: var(--primary);"></i>`;
+  }
+
+  // Highlight active preset color if it matches
+  document.querySelectorAll('.color-preset-btn').forEach(btn => {
+    btn.classList.remove('active');
+    btn.style.border = '2px solid transparent';
+    btn.style.boxShadow = 'none';
+    
+    const presetHex = btn.getAttribute('onclick').match(/#(?:[0-9a-fA-F]{3}){1,2}/)[0];
+    if (presetHex.toLowerCase() === (appState.appPrimaryColor || '#FCD535').toLowerCase()) {
+      btn.classList.add('active');
+      btn.style.border = '2px solid #ffffff';
+      btn.style.boxShadow = '0 0 8px var(--primary)';
+    }
+  });
+
+  // Reset profile values
   if (appState.user) {
-    const avatar = appState.user.avatar || document.getElementById('avatar-letters').innerText || 'AL';
-    const displayName = appState.user.displayName || 'Guest Owner';
+    const avatar = appState.user.avatar || '';
+    const displayName = appState.user.displayName || '';
     const email = appState.user.email || '';
     const phone = appState.user.phone || '';
     const bio = appState.user.bio || '';
@@ -1011,8 +1058,8 @@ function renderSettingsTab() {
   const sizeKb = (new Blob([localStorage.getItem('aura_ledger_db') || '']).size / 1024).toFixed(2);
   document.getElementById('database-storage-size').innerText = `${sizeKb} KB`;
 
-  // 4. Default Settings Sub-tab to Profile
-  switchSettingsTab('profile');
+  // 4. Default Settings Sub-tab to General settings instead of profile
+  switchSettingsTab('general');
 }
 
 function switchSettingsTab(tabId) {
@@ -1020,11 +1067,221 @@ function switchSettingsTab(tabId) {
   document.querySelectorAll('.settings-section-view').forEach(sec => sec.style.display = 'none');
   
   // Show target settings section
-  document.getElementById(`settings-sec-${tabId}`).style.display = 'block';
+  const targetSec = document.getElementById(`settings-sec-${tabId}`);
+  if (targetSec) targetSec.style.display = 'block';
   
   // Update settings tabs active styling
   document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.getElementById(`settings-tab-${tabId}`).classList.add('active');
+  const targetTab = document.getElementById(`settings-tab-${tabId}`);
+  if (targetTab) targetTab.classList.add('active');
+}
+
+// ==========================================
+// GENERAL BRANDING & DYNAMIC RE-THEMING
+// ==========================================
+function applyGeneralSettings() {
+  const name = appState.appName || 'Aura Ledger';
+  const desc = appState.appDescription || 'Secure, Modern Cash Book & Wealth Tracker';
+  const logo = appState.appLogo || '';
+  const favicon = appState.appFavicon || '';
+  const primaryColor = appState.appPrimaryColor || '#FCD535';
+
+  // 1. Dynamic Text & SEO elements
+  const titleTag = document.getElementById('app-title-tag');
+  if (titleTag) {
+    titleTag.innerText = `${name} - Premium Cash Book`;
+  }
+  
+  const metaDesc = document.getElementById('app-meta-description');
+  if (metaDesc) {
+    metaDesc.setAttribute('content', desc);
+  }
+
+  const authSubtitle = document.getElementById('dynamic-auth-subtitle');
+  if (authSubtitle) {
+    authSubtitle.innerText = desc;
+  }
+
+  const footerDesc = document.getElementById('dynamic-footer-desc');
+  if (footerDesc) {
+    footerDesc.innerText = desc;
+  }
+
+  // App Name Brand Elements in Auth, Sidebar, and Footer
+  const formatBrandHtml = (appNameString) => {
+    const words = appNameString.toUpperCase().split(' ');
+    if (words.length > 1) {
+      const firstWord = words[0];
+      const remaining = words.slice(1).join(' ');
+      return `${firstWord} <span>${remaining}</span>`;
+    }
+    return appNameString.toUpperCase();
+  };
+
+  document.querySelectorAll('.dynamic-app-name').forEach(el => {
+    el.innerHTML = formatBrandHtml(name);
+  });
+
+  const footerLogo = document.getElementById('dynamic-footer-logo');
+  if (footerLogo) {
+    footerLogo.innerHTML = formatBrandHtml(name);
+  }
+
+  // 2. Favicon & Link elements
+  const faviconEl = document.getElementById('app-favicon');
+  if (faviconEl) {
+    faviconEl.href = favicon || "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%2309090b'/><circle cx='96' cy='96' r='60' stroke='%237c3aed' stroke-width='10' fill='none'/></svg>";
+  }
+
+  // 3. Logo Image replacements
+  document.querySelectorAll('.dynamic-app-logo').forEach(el => {
+    if (logo) {
+      el.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: 24px; max-width: 120px; object-fit: contain; border-radius: 4px;">`;
+    } else {
+      el.innerHTML = `<i class="fa-solid fa-wallet" style="color: var(--primary);"></i>`;
+    }
+  });
+
+  // 4. CSS Variable Accent re-theming
+  document.documentElement.style.setProperty('--primary', primaryColor);
+}
+
+function syncColorPickerToText(color) {
+  document.getElementById('gen-color-hex').value = color.toUpperCase();
+  // Clear preset buttons outlines
+  document.querySelectorAll('.color-preset-btn').forEach(btn => {
+    btn.classList.remove('active');
+    btn.style.border = '2px solid transparent';
+    btn.style.boxShadow = 'none';
+  });
+}
+
+function syncColorTextToPicker(hex) {
+  if (/^#(?:[0-9a-fA-F]{3}){1,2}$/.test(hex)) {
+    document.getElementById('gen-color-picker').value = hex;
+    
+    // Clear and highlight if match
+    document.querySelectorAll('.color-preset-btn').forEach(btn => {
+      btn.classList.remove('active');
+      btn.style.border = '2px solid transparent';
+      btn.style.boxShadow = 'none';
+      
+      const presetHex = btn.getAttribute('onclick').match(/#(?:[0-9a-fA-F]{3}){1,2}/)[0];
+      if (presetHex.toLowerCase() === hex.toLowerCase()) {
+        btn.classList.add('active');
+        btn.style.border = '2px solid #ffffff';
+        btn.style.boxShadow = '0 0 8px var(--primary)';
+      }
+    });
+  }
+}
+
+function selectColorPreset(color) {
+  document.getElementById('gen-color-picker').value = color;
+  document.getElementById('gen-color-hex').value = color.toUpperCase();
+  
+  document.querySelectorAll('.color-preset-btn').forEach(btn => {
+    btn.classList.remove('active');
+    btn.style.border = '2px solid transparent';
+    btn.style.boxShadow = 'none';
+    
+    const presetHex = btn.getAttribute('onclick').match(/#(?:[0-9a-fA-F]{3}){1,2}/)[0];
+    if (presetHex.toLowerCase() === color.toLowerCase()) {
+      btn.classList.add('active');
+      btn.style.border = '2px solid #ffffff';
+      btn.style.boxShadow = '0 0 8px var(--primary)';
+    }
+  });
+}
+
+async function handleGeneralLogoUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const loadingIndicator = document.getElementById('logo-upload-loading');
+  loadingIndicator.style.display = 'block';
+
+  try {
+    const base64Str = await fileToBase64(file);
+    const cloudinaryUrl = await window.StorageService.uploadToCloudinary(base64Str);
+    
+    document.getElementById('gen-logo-url-input').value = cloudinaryUrl;
+    document.getElementById('gen-logo-preview-box').innerHTML = `<img src="${cloudinaryUrl}" style="width: 100%; height: 100%; object-fit: contain;">`;
+  } catch (err) {
+    console.error('[Branding] Logo upload failed:', err);
+    showDrawerAlert('Logo upload failed: ' + err.message);
+  } finally {
+    loadingIndicator.style.display = 'none';
+  }
+}
+
+async function handleGeneralFaviconUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const loadingIndicator = document.getElementById('favicon-upload-loading');
+  loadingIndicator.style.display = 'block';
+
+  try {
+    const base64Str = await fileToBase64(file);
+    const cloudinaryUrl = await window.StorageService.uploadToCloudinary(base64Str);
+    
+    document.getElementById('gen-favicon-url-input').value = cloudinaryUrl;
+    document.getElementById('gen-favicon-preview-box').innerHTML = `<img src="${cloudinaryUrl}" style="width: 100%; height: 100%; object-fit: contain;">`;
+  } catch (err) {
+    console.error('[Branding] Favicon upload failed:', err);
+    showDrawerAlert('Favicon upload failed: ' + err.message);
+  } finally {
+    loadingIndicator.style.display = 'none';
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleGeneralSettingsSubmit(event) {
+  event.preventDefault();
+  
+  const appName = document.getElementById('gen-name-input').value.trim();
+  const appDescription = document.getElementById('gen-desc-input').value.trim();
+  const appLogo = document.getElementById('gen-logo-url-input').value;
+  const appFavicon = document.getElementById('gen-favicon-url-input').value;
+  const appPrimaryColor = document.getElementById('gen-color-hex').value.trim();
+
+  if (!/^#(?:[0-9a-fA-F]{3}){1,2}$/.test(appPrimaryColor)) {
+    showDrawerAlert('Please enter a valid hex color starting with # (e.g. #FCD535)');
+    return;
+  }
+
+  // Update State
+  appState.appName = appName;
+  appState.appDescription = appDescription;
+  appState.appLogo = appLogo;
+  appState.appFavicon = appFavicon;
+  appState.appPrimaryColor = appPrimaryColor;
+
+  try {
+    await window.StorageService.updateSettings({
+      appName,
+      appDescription,
+      appLogo,
+      appFavicon,
+      appPrimaryColor
+    });
+    
+    applyGeneralSettings();
+    loadSettingsPage();
+    showDrawerAlert('General branding configurations saved and applied in your active Firebase database session!');
+  } catch (err) {
+    console.error('[Branding] Failed to save settings:', err);
+    showDrawerAlert('Failed to save general settings: ' + err.message);
+  }
 }
 
 async function handleProfileSettingsSubmit(event) {
