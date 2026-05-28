@@ -1660,7 +1660,7 @@ body.theme-light .nav-link-btn:hover {
 }
 
 @media (max-width: 768px) {
-  /* Hide sidebar, show mobile menus */
+  /* Hide desktop sidebar, mobile nav will display */
   .sidebar {
     transform: translateX(-100%);
     pointer-events: none;
@@ -1673,58 +1673,66 @@ body.theme-light .nav-link-btn:hover {
   /* Reset Main Content spacing */
   .main-wrapper {
     margin-left: 0;
-    padding-bottom: 80px; /* Safe inset scroll buffer */
+    padding-bottom: 84px; /* Safe mobile nav overlay buffer */
   }
   
   .main-header {
-    padding: 0 20px;
+    padding: 0 16px;
+    height: 60px;
   }
   
   .view-viewport {
-    padding: 20px;
+    padding: 12px;
   }
   
-  /* Flex grid adjustments */
+  .panel-card {
+    padding: 14px;
+    border-radius: 8px;
+  }
+  
+  /* Grid conversions to vertical list flow */
   .streams-grid, .accounts-grid, .budget-limit-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
   
   .goals-grid, .subs-timeline, .reports-layout, .settings-grid {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 16px;
   }
   
   .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr); /* 2x2 grid on standard tablets/mobiles */
+    gap: 10px;
   }
   
   .kpi-card {
-    padding: 16px;
+    padding: 12px;
   }
   
   .kpi-value {
-    font-size: 20px;
+    font-size: 16px;
   }
   
   .auth-card {
-    padding: 30px 20px;
+    width: 92% !important;
+    padding: 24px 16px !important;
   }
 
-  /* Slide-up full bottom drawer on mobile layout */
+  /* Slide-up bottom sheets on mobile devices */
   .modal-overlay {
     justify-content: center;
     align-items: flex-end;
   }
 
   .modal-content-sheet {
-    height: 85vh;
-    border-radius: 12px 12px 0px 0px; /* Elegant curved top corners on bottom drawer */
+    height: 82vh;
+    border-radius: 12px 12px 0 0;
     max-width: 100%;
     transform: translateY(100%);
     border-top: 1px solid var(--border-color);
     border-left: none;
+    padding: 20px 16px;
     transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -1733,21 +1741,110 @@ body.theme-light .nav-link-btn:hover {
   }
 
   .marketing-footer {
-    padding: 20px;
+    padding: 16px;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     text-align: center;
-    margin-bottom: 20px; /* buffer for bottom menu */
+    margin-bottom: 24px;
   }
 }
 
 @media (max-width: 480px) {
+  /* Compresses KPI grid quadrant for super small phones */
   .kpi-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .kpi-card {
+    padding: 10px;
+  }
+  
+  .kpi-card h4 {
+    font-size: 10px;
+  }
+  
+  .kpi-value {
+    font-size: 14px;
+    margin-top: 2px;
+  }
+
+  .kpi-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  /* Compact Transaction Feed Cards for Mobile */
+  .tx-feed-item {
+    padding: 10px 12px;
+    gap: 10px;
+    flex-wrap: wrap; /* Wrap elements gracefully */
+    background: var(--bg-surface);
+  }
+  
+  .tx-category-badge {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+  
+  .tx-details {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .tx-title {
+    font-size: 12px;
+  }
+
+  .tx-desc {
+    font-size: 10px;
+  }
+
+  /* Separate amounts, dates, and actions into a premium card-receipt footer row */
+  .tx-feed-right {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+    border-top: 1px dashed var(--border-color);
+    padding-top: 8px;
+    margin-top: 4px;
+    text-align: left;
+  }
+
+  .tx-amount {
+    font-size: 13px;
+  }
+
+  .tx-feed-right > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tx-date-badge {
+    font-size: 9px;
+  }
+
+  /* Form spacing adjustments on mobile devices */
+  #general-settings-form style, #profile-settings-form style {
+    gap: 12px !important;
+  }
+  
+  /* Settings Preset badging wraps */
+  #color-presets-container {
+    gap: 6px;
+  }
+  
+  .color-preset-btn {
+    width: 24px !important;
+    height: 24px !important;
   }
 }
 
-/* Settings Page Curated Tabs */
+/* Settings Page Curated Scrollable touch Tabs */
 .settings-tabs {
   display: flex;
   gap: 10px;
@@ -1755,26 +1852,36 @@ body.theme-light .nav-link-btn:hover {
   border-bottom: 1px solid var(--border-color);
   padding-bottom: 12px;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Momentum inertia touch-scrolling */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
+
+.settings-tabs::-webkit-scrollbar {
+  display: none; /* Hide standard Webkit scrollbar scroll track */
+}
+
 .settings-tab-btn {
   background: none;
   border: none;
   color: var(--text-secondary);
-  padding: 8px 16px;
-  font-size: 13px;
+  padding: 8px 14px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: var(--transition-smooth);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   border-radius: 6px;
   white-space: nowrap;
 }
+
 .settings-tab-btn:hover {
   background: var(--bg-surface-elevated);
   color: var(--text-primary);
 }
+
 .settings-tab-btn.active {
   background: var(--primary-glow);
   color: var(--primary);
