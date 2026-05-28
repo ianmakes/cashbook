@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aura-ledger-v7';
+const CACHE_NAME = 'aura-ledger-v8';
 const ASSETS = [
   './',
   './index.html',
@@ -35,32 +35,63 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Fetch Event - network fallback to cache with offline resiliency
+// Fetch Event - Network-First with Cache-Fallback and Cache-Busting strategy for immediate updates when online
 self.addEventListener('fetch', (e) => {
+  // Only intercept GET requests
+  if (e.request.method !== 'GET') {
+    return;
+  }
+
   // Only intercept HTTP/S requests, bypass chrome-extension or external analytics if needed
   if (!e.request.url.startsWith(self.location.origin) && !e.request.url.startsWith('http')) {
     return;
   }
 
-  e.respondWith(
-    caches.match(e.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        // Fetch new version in the background (Stale-While-Revalidate pattern)
-        fetch(e.request).then((networkResponse) => {
+  const isLocal = e.request.url.startsWith(self.location.origin);
+
+  if (isLocal) {
+    e.respondWith(
+      // Force fetching from network and bypassing browser HTTP cache (revalidating with server)
+      fetch(e.request, { cache: 'no-cache' })
+        .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
-              cache.put(e.request, networkResponse);
+              cache.put(e.request, responseClone);
             });
           }
-        }).catch(() => { /* Ignore offline fetch errors */ });
-        
-        return cachedResponse;
-      }
-      
-      return fetch(e.request).catch(() => {
-        // Offline fallback if not cached
-        console.log('[Service Worker] Asset not in cache and network offline:', e.request.url);
-      });
-    })
-  );
+          return networkResponse;
+        })
+        .catch(() => {
+          // Fallback to cache if network request fails (e.g. offline)
+          return caches.match(e.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+            console.warn('[Service Worker] Asset not in cache and network offline:', e.request.url);
+          });
+        })
+    );
+  } else {
+    // For external requests, standard network-first strategy without forcing cache: 'no-cache'
+    e.respondWith(
+      fetch(e.request)
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(e.request, responseClone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          return caches.match(e.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse;
+            }
+          });
+        })
+    );
+  }
 });

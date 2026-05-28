@@ -23,8 +23,46 @@ let appState = {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then((reg) => console.log('[PWA] Service Worker registered successfully:', reg.scope))
+      .then((reg) => {
+        console.log('[PWA] Service Worker registered successfully:', reg.scope);
+        
+        // Actively check for service worker updates on page load
+        reg.update();
+
+        // Check if there is an update already waiting
+        if (reg.waiting) {
+          console.log('[PWA] New service worker is waiting. Activating...');
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+
+        // Listen for new service worker installation
+        reg.onupdatefound = () => {
+          const installingWorker = reg.installing;
+          if (installingWorker) {
+            installingWorker.onstatechange = () => {
+              if (installingWorker.state === 'installed') {
+                if (navigator.serviceWorker.controller) {
+                  console.log('[PWA] New content is available; reloading page to apply update...');
+                  window.location.reload();
+                } else {
+                  console.log('[PWA] Content is cached for offline use.');
+                }
+              }
+            };
+          }
+        };
+      })
       .catch((err) => console.error('[PWA] Service Worker registration failed:', err));
+  });
+
+  // Reload the page when a new Service Worker takes over
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!refreshing) {
+      refreshing = true;
+      console.log('[PWA] Controller changed; reloading page...');
+      window.location.reload();
+    }
   });
 }
 
