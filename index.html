@@ -31,10 +31,16 @@
 <body>
 
   <!-- ==========================================
-       FIREBASE AUTH VIEW (Glassmorphic Mockup)
+       FIREBASE AUTH VIEW (Fintech Grade Portal)
        ========================================== -->
   <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-glow-1"></div>
+    <div class="auth-glow-2"></div>
     <div class="auth-card">
+      <div class="secure-badge">
+        <span class="pulse-dot"></span>
+        <span>Secure Financial Node</span>
+      </div>
       <div class="auth-logo">
         <span class="dynamic-app-logo"><i class="fa-solid fa-wallet" style="color: var(--primary);"></i></span>
         <span class="dynamic-app-name">AURA <span>LEDGER</span></span>
@@ -42,17 +48,24 @@
       <p class="auth-subtitle" id="dynamic-auth-subtitle">Secure, Modern Cash Book & Wealth Tracker</p>
 
       <!-- Auth Method: Email/Password -->
-      <div id="auth-sec-email" class="auth-method-section" style="margin-top: 24px;">
-        <div class="form-group" style="margin-bottom: 16px;">
+      <div id="auth-sec-email" class="auth-method-section">
+        <div class="form-group" style="margin-bottom: 18px;">
           <label class="form-label">Email Address</label>
-          <input type="email" id="auth-email-input" class="input-field" placeholder="name@example.com">
+          <div class="input-wrapper">
+            <i class="fa-solid fa-envelope input-icon"></i>
+            <input type="email" id="auth-email-input" class="input-field" placeholder="name@example.com">
+          </div>
         </div>
         <div class="form-group" style="margin-bottom: 24px;">
           <label class="form-label">Password</label>
-          <input type="password" id="auth-pw-input" class="input-field" placeholder="Enter secure password">
+          <div class="input-wrapper">
+            <i class="fa-solid fa-lock input-icon"></i>
+            <input type="password" id="auth-pw-input" class="input-field" placeholder="Enter secure password">
+          </div>
         </div>
         <button class="auth-btn" onclick="triggerMockAuth('Email')">
-          <i class="fa-solid fa-envelope"></i> Sign In / Sign Up
+          <span>Sign In to Your Ledger</span>
+          <i class="fa-solid fa-arrow-right-to-bracket"></i>
         </button>
       </div>
     </div>

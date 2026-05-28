@@ -1177,8 +1177,10 @@ function applyGeneralSettings() {
     if (logo) {
       // If custom logo is set: show only the logo image (no app name text, default wallet is swapped)
       if (sidebarLogoIcon) {
-        sidebarLogoIcon.style.display = 'inline-block';
-        sidebarLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: 28px; max-width: 180px; object-fit: contain; border-radius: 4px;">`;
+        sidebarLogoIcon.style.display = 'flex';
+        sidebarLogoIcon.style.width = '100%';
+        sidebarLogoIcon.style.justifyContent = 'flex-start';
+        sidebarLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: auto; max-height: 48px; max-width: 100%; object-fit: contain; border-radius: 4px;">`;
       }
       sidebarName.style.display = 'none';
     } else {
@@ -1199,8 +1201,10 @@ function applyGeneralSettings() {
     if (logo) {
       // If custom logo is set: show only the logo image (no app name text, default wallet is swapped)
       if (authLogoIcon) {
-        authLogoIcon.style.display = 'inline-block';
-        authLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: 36px; max-width: 220px; object-fit: contain; border-radius: 4px;">`;
+        authLogoIcon.style.display = 'flex';
+        authLogoIcon.style.width = '100%';
+        authLogoIcon.style.justifyContent = 'center';
+        authLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: auto; max-height: 64px; max-width: 100%; object-fit: contain; border-radius: 4px;">`;
       }
       authName.style.display = 'none';
     } else {
@@ -1935,7 +1939,19 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('sub-date-input').value = new Date().toISOString().split('T')[0];
 
-  // 2. Check if a cached user session exists, bypassing or loading Auth overlay
+  // 2. Fetch initial branding settings from database to render dynamic branding immediately (even when logged out)
+  window.StorageService.getSettings().then(settings => {
+    appState.appName = settings.appName || 'Aura Ledger';
+    appState.appDescription = settings.appDescription || 'Secure, Modern Cash Book & Wealth Tracker';
+    appState.appFavicon = settings.appFavicon || '';
+    appState.appLogo = settings.appLogo || '';
+    appState.appPrimaryColor = settings.appPrimaryColor || '#FCD535';
+    applyGeneralSettings();
+  }).catch(err => {
+    console.warn('[Branding] Failed to fetch initial branding settings:', err);
+  });
+
+  // 3. Check if a cached user session exists, bypassing or loading Auth overlay
   const cachedUser = localStorage.getItem('aura_user_session');
   if (cachedUser) {
     appState.user = JSON.parse(cachedUser);
