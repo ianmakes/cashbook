@@ -1,9 +1,9 @@
 // Default seed data for Aura Ledger Cash Book
 const DEFAULT_DATA = {
   accounts: [
-    { id: 'acc-1', name: 'USD Wallet (Cash)', currency: 'USD', symbol: '$', balance: 4850.00 },
-    { id: 'acc-2', name: 'EUR Bank Account', currency: 'EUR', symbol: '€', balance: 2450.00 },
-    { id: 'acc-3', name: 'GBP Debit Card', currency: 'GBP', symbol: '£', balance: 350.00 }
+    { id: 'acc-1', name: 'KES Cash Wallet', currency: 'KES', symbol: 'KSh', balance: 485000.00 },
+    { id: 'acc-2', name: 'KES Bank Account', currency: 'KES', symbol: 'KSh', balance: 245000.00 },
+    { id: 'acc-3', name: 'KES M-Pesa Wallet', currency: 'KES', symbol: 'KSh', balance: 35000.00 }
   ],
   cashbooks: [
     { id: 'cb-1', name: 'Corporate Salary', icon: '💼', description: 'Primary 9-to-5 job stream' },
@@ -18,8 +18,8 @@ const DEFAULT_DATA = {
     {
       id: 'tx-1',
       type: 'income',
-      amount: 4500.00,
-      currency: 'USD',
+      amount: 450000.00,
+      currency: 'KES',
       accountId: 'acc-1',
       cashbookId: 'cb-1',
       category: 'Salary',
@@ -30,8 +30,8 @@ const DEFAULT_DATA = {
     {
       id: 'tx-2',
       type: 'expense',
-      amount: 1200.00,
-      currency: 'USD',
+      amount: 120000.00,
+      currency: 'KES',
       accountId: 'acc-1',
       cashbookId: 'cb-1',
       category: 'Rent & Housing',
@@ -42,8 +42,8 @@ const DEFAULT_DATA = {
     {
       id: 'tx-3',
       type: 'income',
-      amount: 850.00,
-      currency: 'EUR',
+      amount: 85000.00,
+      currency: 'KES',
       accountId: 'acc-2',
       cashbookId: 'cb-2',
       category: 'Freelance',
@@ -54,8 +54,8 @@ const DEFAULT_DATA = {
     {
       id: 'tx-4',
       type: 'expense',
-      amount: 15.49,
-      currency: 'USD',
+      amount: 2000.00,
+      currency: 'KES',
       accountId: 'acc-1',
       cashbookId: 'cb-1',
       category: 'Subscriptions',
@@ -66,8 +66,8 @@ const DEFAULT_DATA = {
     {
       id: 'tx-5',
       type: 'expense',
-      amount: 72.50,
-      currency: 'GBP',
+      amount: 7250.00,
+      currency: 'KES',
       accountId: 'acc-3',
       cashbookId: 'cb-1',
       category: 'Groceries',
@@ -78,8 +78,8 @@ const DEFAULT_DATA = {
     {
       id: 'tx-6',
       type: 'income',
-      amount: 320.00,
-      currency: 'USD',
+      amount: 32000.00,
+      currency: 'KES',
       accountId: 'acc-1',
       cashbookId: 'cb-3',
       category: 'Digital Products',
@@ -90,8 +90,8 @@ const DEFAULT_DATA = {
     {
       id: 'tx-7',
       type: 'expense',
-      amount: 110.00,
-      currency: 'EUR',
+      amount: 11000.00,
+      currency: 'KES',
       accountId: 'acc-2',
       cashbookId: 'cb-2',
       category: 'Utilities',
@@ -102,8 +102,8 @@ const DEFAULT_DATA = {
     {
       id: 'tx-8',
       type: 'expense',
-      amount: 95.00,
-      currency: 'USD',
+      amount: 9500.00,
+      currency: 'KES',
       accountId: 'acc-1',
       cashbookId: 'cb-1',
       category: 'Dining Out',
@@ -114,8 +114,8 @@ const DEFAULT_DATA = {
     {
       id: 'tx-9',
       type: 'expense',
-      amount: 10.00,
-      currency: 'EUR',
+      amount: 1000.00,
+      currency: 'KES',
       accountId: 'acc-2',
       cashbookId: 'cb-1',
       category: 'Subscriptions',
@@ -134,20 +134,16 @@ const DEFAULT_DATA = {
     { id: 'gl-2', name: 'Japan Tokyo Trip 🇯🇵', target: 600000.00, current: 240000.00, currency: 'KES' }
   ],
   subscriptions: [
-    { id: 'sub-1', name: 'Netflix Premium UHD', amount: 15.49, currency: 'USD', frequency: 'monthly', nextBill: '2026-06-01', category: 'Subscriptions', accountId: 'acc-1' },
-    { id: 'sub-2', name: 'Spotify Premium Family', amount: 10.00, currency: 'EUR', frequency: 'monthly', nextBill: '2026-06-10', category: 'Subscriptions', accountId: 'acc-2' },
-    { id: 'sub-3', name: 'Amazon Prime Video', amount: 8.99, currency: 'GBP', frequency: 'monthly', nextBill: '2026-06-15', category: 'Subscriptions', accountId: 'acc-3' },
-    { id: 'sub-4', name: 'AWS Cloud Hosting Server', amount: 48.00, currency: 'USD', frequency: 'monthly', nextBill: '2026-06-05', category: 'Subscriptions', accountId: 'acc-1' },
-    { id: 'sub-5', name: 'CrossFit Yearly Membership', amount: 399.00, currency: 'USD', frequency: 'annually', nextBill: '2026-11-20', category: 'Health & Fitness', accountId: 'acc-1' }
+    { id: 'sub-1', name: 'Netflix Premium UHD', amount: 2000.00, currency: 'KES', frequency: 'monthly', accountId: 'acc-1', nextBill: '2026-06-01', category: 'Subscriptions' },
+    { id: 'sub-2', name: 'Spotify Premium Family', amount: 1000.00, currency: 'KES', frequency: 'monthly', accountId: 'acc-2', nextBill: '2026-06-10', category: 'Subscriptions' },
+    { id: 'sub-3', name: 'Amazon Prime Video', amount: 900.00, currency: 'KES', frequency: 'monthly', accountId: 'acc-3', nextBill: '2026-06-15', category: 'Subscriptions' },
+    { id: 'sub-4', name: 'AWS Cloud Hosting Server', amount: 6000.00, currency: 'KES', frequency: 'monthly', accountId: 'acc-1', nextBill: '2026-06-05', category: 'Subscriptions' },
+    { id: 'sub-5', name: 'CrossFit Yearly Membership', amount: 40000.00, currency: 'KES', frequency: 'annually', accountId: 'acc-1', nextBill: '2026-11-20', category: 'Health & Fitness' }
   ],
   settings: {
     baseCurrency: 'KES',
     exchangeRates: {
-      USD: 130.0,   // 1 USD = 130 KES
-      EUR: 141.0,   // 1 EUR = 141 KES
-      GBP: 165.0,   // 1 GBP = 165 KES
-      KES: 1.0,     // 1 KES = 1 KES
-      JPY: 0.85     // 1 JPY = 0.85 KES
+      KES: 1.0
     },
     appName: 'Aura Ledger',
     appDescription: 'Secure, Modern Cash Book & Wealth Tracker',

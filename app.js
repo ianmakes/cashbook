@@ -317,8 +317,8 @@ async function initializeDashboardData() {
   // Apply dynamic settings globally in real time
   applyGeneralSettings();
 
-  // Sync Base Currency dropdown default
-  const baseCurrencySelect = document.getElementById('header-base-currency-select');
+  // Sync Base Currency dropdown default in settings
+  const baseCurrencySelect = document.getElementById('settings-base-currency-select');
   if (baseCurrencySelect) baseCurrencySelect.value = appState.baseCurrency;
 
   // Render current tab views
@@ -1075,18 +1075,19 @@ function loadSettingsPage() {
 
   // 1. Render Exchange Rates Inputs
   const containerRates = document.getElementById('exchange-rates-editor');
-  
-  containerRates.innerHTML = Object.entries(appState.exchangeRates).map(([currency, rate]) => {
-    if (currency === appState.baseCurrency) return ''; // Skip self base conversion
-    return `
-      <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.15); padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border-color);">
-        <span style="font-weight: 700; font-size: 13px;">1 ${currency} converts to:</span>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <input type="number" step="0.0001" min="0.00001" class="input-field" style="width: 100px; padding: 4px 8px; font-size:12px; text-align:right;" value="${rate}" onchange="updateCustomExchangeRate('${currency}', this.value)">
-          <span style="font-size:11px; color:var(--text-secondary);">${appState.baseCurrency}</span>
-        </div>
-      </div>`;
-  }).join('');
+  if (containerRates) {
+    containerRates.innerHTML = Object.entries(appState.exchangeRates).map(([currency, rate]) => {
+      if (currency === appState.baseCurrency) return ''; // Skip self base conversion
+      return `
+        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.15); padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border-color);">
+          <span style="font-weight: 700; font-size: 13px;">1 ${currency} converts to:</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="number" step="0.0001" min="0.00001" class="input-field" style="width: 100px; padding: 4px 8px; font-size:12px; text-align:right;" value="${rate}" onchange="updateCustomExchangeRate('${currency}', this.value)">
+            <span style="font-size:11px; color:var(--text-secondary);">${appState.baseCurrency}</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
 
   // 2. Render Categories Tags Cloud
   const tagsBox = document.getElementById('settings-categories-box');
@@ -1676,9 +1677,10 @@ async function deleteLedgerCb(event, cbId) {
 async function handleAccountSubmit(event) {
   event.preventDefault();
   const name = document.getElementById('acc-name-input').value;
-  const currency = document.getElementById('acc-currency-input').value;
-  const symbol = document.getElementById('acc-symbol-input').value;
-  const balance = document.getElementById('acc-bal-input').value || 0;
+  const currency = appState.baseCurrency || 'KES';
+  const symbols = { USD: '$', EUR: '€', GBP: '£', KES: 'KSh', JPY: '¥' };
+  const symbol = symbols[currency] || 'KSh';
+  const balance = parseFloat(document.getElementById('acc-bal-input').value) || 0;
 
   await window.StorageService.addAccount({ name, currency, symbol, balance });
   closeModal('account-modal');
@@ -1797,9 +1799,13 @@ async function updateCustomExchangeRate(currency, rate) {
   initializeDashboardData();
 }
 
-async function changeBaseCurrency(newVal) {
+async function saveBaseCurrencySettings() {
+  const newVal = document.getElementById('settings-base-currency-select').value;
   await window.StorageService.updateSettings({ baseCurrency: newVal });
+  appState.baseCurrency = newVal;
+  applyGeneralSettings();
   initializeDashboardData();
+  showDrawerAlert(`Base currency updated successfully to ${newVal}!`);
 }
 
 async function createNewCategory() {

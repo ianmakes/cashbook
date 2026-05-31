@@ -137,17 +137,7 @@
           <h1 id="current-view-title">Dashboard</h1>
         </div>
         <div class="header-actions">
-          <!-- Multi-currency display configurer -->
-          <div class="base-currency-badge">
-            <span>Base Currency:</span>
-            <select id="header-base-currency-select" onchange="changeBaseCurrency(this.value)">
-              <option value="USD">USD ($)</option>
-              <option value="EUR">EUR (€)</option>
-              <option value="GBP">GBP (£)</option>
-              <option value="KES">KES (KSh)</option>
-              <option value="JPY">JPY (¥)</option>
-            </select>
-          </div>
+
           <button class="header-action-btn" onclick="openModal('tx-modal')">
             <i class="fa-solid fa-plus"></i> Add Transaction
           </button>
@@ -644,15 +634,28 @@
             </div>
           </div>
 
-          <!-- Section 2: Currency & Rates -->
+          <!-- Section 2: Base Currency Selection -->
           <div id="settings-sec-currency" class="settings-section-view" style="display: none;">
             <div class="panel-card">
-              <h3 style="font-size: 16px; font-weight:700; margin-bottom: 10px;"><i class="fa-solid fa-coins" style="color: var(--primary); margin-right: 6px;"></i> Custom Exchange Rates</h3>
+              <h3 style="font-size: 16px; font-weight:700; margin-bottom: 10px;"><i class="fa-solid fa-coins" style="color: var(--primary); margin-right: 6px;"></i> Base Currency Settings</h3>
               <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">
-                Define how secondary accounts convert to the base currency. Rates are expressed relative to 1 base currency unit.
+                Configure the primary base currency for your financial ledger. All cashbooks, savings goals, budgets, and transactions will compute and display using this currency.
               </p>
-              <div id="exchange-rates-editor" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
-                <!-- Dynamically populated -->
+              
+              <div style="max-width: 400px; display: flex; flex-direction: column; gap: 16px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">Global Base Currency</label>
+                  <select id="settings-base-currency-select" class="input-field">
+                    <option value="KES">KES (Kenya Shilling - KSh)</option>
+                    <option value="USD">USD (US Dollar - $)</option>
+                    <option value="EUR">EUR (Euro - €)</option>
+                    <option value="GBP">GBP (British Pound - £)</option>
+                    <option value="JPY">JPY (Japanese Yen - ¥)</option>
+                  </select>
+                </div>
+                <button class="auth-btn" style="width: auto; margin-top: 8px; padding: 12px 24px;" onclick="saveBaseCurrencySettings()">
+                  <i class="fa-solid fa-floppy-disk"></i> Save Base Currency
+                </button>
               </div>
             </div>
           </div>
@@ -876,22 +879,7 @@
           <input type="text" id="acc-name-input" class="input-field" placeholder="e.g. Bank Savings Wallet" required>
         </div>
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
-          <div>
-            <label class="form-label">Currency Code</label>
-            <select id="acc-currency-input" class="input-field" onchange="updateCurrencySymbolDefault(this.value)">
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="KES">KES</option>
-              <option value="JPY">JPY</option>
-            </select>
-          </div>
-          <div>
-            <label class="form-label">Currency Symbol</label>
-            <input type="text" id="acc-symbol-input" class="input-field" value="$" maxlength="4" required>
-          </div>
-        </div>
+
 
         <div class="form-group">
           <label class="form-label">Opening Initial Balance</label>
@@ -918,7 +906,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Monthly Limit ($ value in base currency)</label>
+          <label class="form-label">Monthly Limit (Value in Base Currency)</label>
           <input type="number" id="bg-limit-input" class="input-field" step="1" placeholder="e.g. 300" required>
         </div>
         <button type="submit" class="auth-btn">
@@ -942,11 +930,11 @@
         
         <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; margin-bottom: 20px;">
           <div>
-            <label class="form-label">Target Goal Amount ($)</label>
-            <input type="number" id="gl-target-input" class="input-field" step="10" placeholder="e.g. 2000" required>
+            <label class="form-label">Target Goal Amount (KES value)</label>
+            <input type="number" id="gl-target-input" class="input-field" step="10" placeholder="e.g. 200000" required>
           </div>
           <div>
-            <label class="form-label">Initial Seed Contribution ($)</label>
+            <label class="form-label">Initial Seed Contribution (KES value)</label>
             <input type="number" id="gl-seed-input" class="input-field" step="10" placeholder="0" value="0">
           </div>
         </div>
