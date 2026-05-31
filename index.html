@@ -36,47 +36,93 @@
   <div id="auth-overlay" class="auth-overlay">
     <div class="auth-split-container">
       
-      <!-- LEFT PANEL: Marketing & Visuals (hides on mobile < 900px) -->
+      <!-- LEFT PANEL: High-Fidelity Laptop Mockup (hides on mobile < 900px) -->
       <div class="auth-split-left">
-        <div class="brand-typography">
-          <span class="brand-money">Your Money.</span>
-          <span class="brand-smarter">Smarter, Safer.</span>
-        </div>
+        <div class="mockup-circle-wash"></div>
         
         <div class="illustration-container">
-          <img src="fintech_login_side_image.png" alt="Happy woman in beanbag working on laptop" class="fintech-side-img">
-          
-          <!-- Absolute positioned floating stats badges -->
-          <div class="floating-badge badge-balance">
-            <i class="fa-solid fa-wallet"></i>
-            <div class="badge-content">
-              <span class="badge-label">Active Balance</span>
-              <span class="badge-value">KSh 450,000</span>
-            </div>
-          </div>
-          
-          <div class="floating-badge badge-success">
-            <div class="success-ring"><i class="fa-solid fa-check"></i></div>
-            <div class="badge-content">
-              <span class="badge-label">Transfer Status</span>
-              <span class="badge-value">Successful ✓</span>
+          <!-- Premium CSS-styled Mobile Phone Preview -->
+          <div class="phone-mockup-frame">
+            <div class="phone-notch"></div>
+            
+            <div class="phone-inner-screen">
+              <!-- Top Header Row -->
+              <div class="phone-header-row">
+                <div class="phone-user-badge">
+                  <div class="phone-avatar-circle"><i class="fa-solid fa-user"></i></div>
+                  <span class="phone-user-name">Lola Tucker</span>
+                </div>
+                <div class="phone-header-actions">
+                  <i class="fa-regular fa-bell"></i>
+                  <i class="fa-regular fa-user-circle"></i>
+                </div>
+              </div>
+              
+              <!-- Portfolio Card -->
+              <div class="phone-portfolio-card">
+                <div class="portfolio-meta">
+                  <span class="portfolio-card-title">Current Portfolio Value</span>
+                  <i class="fa-solid fa-chevron-right chevron-icon"></i>
+                </div>
+                <div class="portfolio-card-value">KSh 1,525,000</div>
+              </div>
+              
+              <!-- Metrics Grid -->
+              <div class="phone-metrics-grid">
+                <div class="metric-box">
+                  <span class="metric-lbl">Invested</span>
+                  <span class="metric-val">KSh 1.50 M</span>
+                </div>
+                <div class="metric-box">
+                  <span class="metric-lbl">Total Returns</span>
+                  <span class="metric-val return-green">+ KSh 25.0K</span>
+                </div>
+                <div class="metric-box">
+                  <span class="metric-lbl">XIRR</span>
+                  <span class="metric-val return-green">+ 12.14%</span>
+                </div>
+              </div>
+              
+              <!-- Policies / Life List -->
+              <ul class="phone-options-list">
+                <li>
+                  <div class="opt-icon icon-yellow"><i class="fa-solid fa-shield-heart"></i></div>
+                  <span class="opt-title">Life Protection</span>
+                  <i class="fa-solid fa-chevron-right opt-chevron"></i>
+                </li>
+                <li>
+                  <div class="opt-icon icon-blue"><i class="fa-solid fa-piggy-bank"></i></div>
+                  <span class="opt-title">Backup Savings</span>
+                  <i class="fa-solid fa-chevron-right opt-chevron"></i>
+                </li>
+                <li>
+                  <div class="opt-icon icon-purple"><i class="fa-solid fa-plane-departure"></i></div>
+                  <span class="opt-title">Travel Abroad</span>
+                  <i class="fa-solid fa-chevron-right opt-chevron"></i>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
         
-        <div class="auth-features">
-          <span><i class="fa-solid fa-shield-halved"></i> Bank Level Security</span>
-          <span><i class="fa-solid fa-bolt"></i> Instant Transfers</span>
-          <span><i class="fa-solid fa-chart-line"></i> Smart Insights</span>
+        <div class="mockup-marketing-text">
+          <h2 class="mockup-bold-title">Manage policies and plan your future all in one place</h2>
+          <p class="mockup-subtext">Stay in Control of Your Financial Journey by tracking your goals and progress.</p>
+          
+          <div class="mockup-page-dots">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+          </div>
         </div>
       </div>
       
-      <!-- RIGHT PANEL: Credentials Form -->
+      <!-- RIGHT PANEL: Clean Credentials Form -->
       <div class="auth-split-right">
         <div class="auth-header-row">
           <div class="auth-logo-large">
-            <span class="dynamic-app-logo"></span>
-            <span class="dynamic-app-name-large">Aura Ledger</span>
+            <div class="brand-ribbon-icon"><i class="fa-solid fa-wave-square"></i></div>
+            <span class="dynamic-app-name-large">WealthRight</span>
           </div>
           
           <!-- Top Segmented Pill Control -->
@@ -131,7 +177,7 @@
               <a href="#" class="forgot-link" onclick="handleForgotPassword(event)">Forgot Password?</a>
             </div>
             
-            <!-- Action Button (Green Pill) -->
+            <!-- Action Button (Teal Pill) -->
             <button type="submit" class="auth-pill-btn" id="auth-submit-btn">
               <span>Sign In to Ledger</span>
               <i class="fa-solid fa-arrow-right-to-bracket" id="auth-submit-icon"></i>
@@ -675,6 +721,21 @@
               </p>
               
               <form id="profile-settings-form" onsubmit="handleProfileSettingsSubmit(event)" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; align-items: flex-end;">
+                <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; margin-bottom: 12px; background: var(--bg-surface-elevated); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color);">
+                  <div id="prof-image-preview-box" style="width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--primary); display: flex; align-items: center; justify-content: center; background: var(--bg-base); overflow: hidden; position: relative;">
+                    <span id="prof-avatar-placeholder" style="font-weight: 700; font-size: 20px; color: var(--text-primary);">AL</span>
+                  </div>
+                  <div>
+                    <label class="camera-trigger-label" style="display: inline-flex; width: auto; font-size: 12px; padding: 8px 14px; gap: 6px; cursor: pointer; border-radius: 6px;">
+                      <i class="fa-solid fa-image"></i> Change Profile Photo
+                      <input type="file" id="prof-image-file" accept="image/*" style="display: none;" onchange="handleProfilePhotoUpload(this)">
+                    </label>
+                    <input type="hidden" id="prof-image-url-input" value="">
+                    <div id="prof-image-upload-loading" style="font-size: 10px; color: var(--primary); margin-top: 4px; display: none;">
+                      <i class="fa-solid fa-spinner fa-spin"></i> Uploading to Cloudinary...
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <label class="form-label">Avatar Initials</label>
                   <input type="text" id="prof-avatar-input" class="input-field" maxlength="2" placeholder="AL" style="text-align: center; font-weight: 700; text-transform: uppercase;" required>
@@ -1099,6 +1160,191 @@
       <button class="auth-btn" onclick="closeModal('alert-drawer')">
         <i class="fa-solid fa-circle-check"></i> Understood
       </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PROFESSIONAL MULTI-STEP ONBOARDING WIZARD
+       ========================================== -->
+  <div id="onboarding-overlay" class="onboarding-overlay">
+    <div class="onboarding-card animate-scale-up">
+      <div class="onboarding-progress-container">
+        <div class="onboarding-progress-bar" id="onboarding-progress"></div>
+        <div class="onboarding-steps-badges">
+          <div class="onboarding-step-badge active" data-step="1">1</div>
+          <div class="onboarding-step-badge" data-step="2">2</div>
+          <div class="onboarding-step-badge" data-step="3">3</div>
+          <div class="onboarding-step-badge" data-step="4">4</div>
+          <div class="onboarding-step-badge" data-step="5">5</div>
+        </div>
+      </div>
+      
+      <!-- STEP 1: Profile Identity -->
+      <div class="onboarding-step active" id="onboarding-step-1">
+        <h2 class="onboarding-title">Let's build your profile</h2>
+        <p class="onboarding-desc">Setup your identity details & premium profile avatar image.</p>
+        
+        <div class="onboarding-avatar-upload-sec">
+          <div class="onboarding-avatar-preview" id="onboarding-avatar-preview">
+            <span id="onboarding-avatar-letters">WR</span>
+          </div>
+          <div>
+            <label class="camera-trigger-label" style="cursor: pointer; display: inline-flex; gap: 6px; font-size: 12px; padding: 8px 16px;">
+              <i class="fa-solid fa-camera"></i> Choose Avatar Photo
+              <input type="file" id="onboarding-photo-file" accept="image/*" style="display: none;" onchange="handleOnboardingPhotoUpload(this)">
+            </label>
+            <input type="hidden" id="onboarding-photo-url" value="">
+            <div id="onboarding-photo-loading" style="font-size: 11px; color: var(--primary); margin-top: 6px; display: none;">
+              <i class="fa-solid fa-spinner fa-spin"></i> Resizing and Uploading to Cloudinary...
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group" style="margin-top: 15px;">
+          <label class="form-label">Avatar Initials (max 2 characters)</label>
+          <input type="text" id="onboarding-initials" class="input-field" maxlength="2" placeholder="WR" style="text-align: center; font-weight: 700; width: 80px;" oninput="this.value = this.value.toUpperCase(); updateOnboardingAvatarFallback()">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Full Display Name</label>
+          <input type="text" id="onboarding-display-name" class="input-field" placeholder="e.g. Lola Tucker" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Personal Bio / Memo</label>
+          <input type="text" id="onboarding-bio" class="input-field" placeholder="e.g. Planning my long-term future & goals">
+        </div>
+        
+        <div class="onboarding-actions">
+          <button type="button" class="auth-pill-btn onboarding-next-btn" onclick="setOnboardingStep(2)">
+            <span>Continue Profile</span> <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- STEP 2: Company/Business Details -->
+      <div class="onboarding-step" id="onboarding-step-2">
+        <h2 class="onboarding-title">Company & Business Profile</h2>
+        <p class="onboarding-desc">Optionally add professional business contexts to your wealth tracking node.</p>
+        
+        <div class="form-group">
+          <label class="form-label">Company / Business Name (Optional)</label>
+          <input type="text" id="onboarding-company-name" class="input-field" placeholder="e.g. Lola Consulting Ltd">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Industry Sector</label>
+          <select id="onboarding-industry" class="input-field">
+            <option value="">Select industry (Optional)</option>
+            <option value="tech">Technology / Freelance</option>
+            <option value="retail">Commerce & Retail</option>
+            <option value="services">Creative & Consultation</option>
+            <option value="realestate">Real Estate & Property</option>
+            <option value="other">Other Operations</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Business Description / Location</label>
+          <input type="text" id="onboarding-company-desc" class="input-field" placeholder="e.g. Remote design consultancy based in Nairobi">
+        </div>
+        
+        <div class="onboarding-actions">
+          <button type="button" class="backup-btn onboarding-back-btn" onclick="setOnboardingStep(1)">Back</button>
+          <button type="button" class="auth-pill-btn onboarding-next-btn" onclick="setOnboardingStep(3)">
+            <span>Add Business Details</span> <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- STEP 3: Theme & Global Currency -->
+      <div class="onboarding-step" id="onboarding-step-3">
+        <h2 class="onboarding-title">Custom Theme & Currency</h2>
+        <p class="onboarding-desc">Setup the visual accent color and primary global currency format.</p>
+        
+        <div class="form-group">
+          <label class="form-label">Primary Currency Unit</label>
+          <select id="onboarding-currency" class="input-field">
+            <option value="KES" selected>KES (Kenya Shilling - KSh)</option>
+            <option value="USD">USD (US Dollar - $)</option>
+            <option value="EUR">EUR (Euro - €)</option>
+            <option value="GBP">GBP (British Pound - £)</option>
+            <option value="JPY">JPY (Japanese Yen - ¥)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Choose Dashboard Primary Theme Color</label>
+          <div class="onboarding-color-grid">
+            <div class="onboarding-color-opt active" data-color="#0083b0" style="background: #0083b0;" onclick="selectOnboardingColor('#0083b0')"><span>Teal Accent</span></div>
+            <div class="onboarding-color-opt" data-color="#7c3aed" style="background: #7c3aed;" onclick="selectOnboardingColor('#7c3aed')"><span>Purple Theme</span></div>
+            <div class="onboarding-color-opt" data-color="#10b981" style="background: #10b981;" onclick="selectOnboardingColor('#10b981')"><span>Emerald Green</span></div>
+            <div class="onboarding-color-opt" data-color="#f43f5e" style="background: #f43f5e;" onclick="selectOnboardingColor('#f43f5e')"><span>Rose Pink</span></div>
+          </div>
+          <input type="hidden" id="onboarding-selected-color" value="#0083b0">
+        </div>
+        
+        <div class="onboarding-actions">
+          <button type="button" class="backup-btn onboarding-back-btn" onclick="setOnboardingStep(2)">Back</button>
+          <button type="button" class="auth-pill-btn onboarding-next-btn" onclick="setOnboardingStep(4)">
+            <span>Establish Branding</span> <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- STEP 4: First Cashbook Setup -->
+      <div class="onboarding-step" id="onboarding-step-4">
+        <h2 class="onboarding-title">Launch First Income Stream</h2>
+        <p class="onboarding-desc">Every great wealth manager starts with a primary stream. Let's create your first cashbook!</p>
+        
+        <div class="form-group">
+          <label class="form-label">First Stream Name</label>
+          <input type="text" id="onboarding-cb-name" class="input-field" placeholder="e.g. Primary Salary, Consulting Gigs" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Visual Emoji Icon</label>
+          <input type="text" id="onboarding-cb-icon" class="input-field" placeholder="e.g. 💻, 💼, 👔" maxlength="4" value="💼">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">Stream Description / Target</label>
+          <input type="text" id="onboarding-cb-desc" class="input-field" placeholder="e.g. Main job monthly revenue stream">
+        </div>
+        
+        <div class="onboarding-actions">
+          <button type="button" class="backup-btn onboarding-back-btn" onclick="setOnboardingStep(3)">Back</button>
+          <button type="button" class="auth-pill-btn onboarding-next-btn" onclick="setOnboardingStep(5)">
+            <span>Create First Stream</span> <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+      
+      <!-- STEP 5: Congratulations / Launch -->
+      <div class="onboarding-step" id="onboarding-step-5" style="text-align: center;">
+        <div class="onboarding-success-icon"><i class="fa-solid fa-circle-check"></i></div>
+        <h2 class="onboarding-title">Setup Complete!</h2>
+        <p class="onboarding-desc">Your premium offline-first WealthRight database sandbox is ready to launch.</p>
+        
+        <div class="onboarding-summary-box">
+          <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">
+            <strong>Display Profile:</strong> <span id="summary-display-name">Lola Tucker</span> (<span id="summary-initials">WR</span>)
+          </div>
+          <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 6px;">
+            <strong>First Stream:</strong> <span id="summary-cb-name">Primary Salary</span>
+          </div>
+          <div style="font-size: 13px; color: var(--text-secondary);">
+            <strong>Global Currency:</strong> <span id="summary-currency">KES</span>
+          </div>
+        </div>
+        
+        <div class="onboarding-actions" style="justify-content: center; margin-top: 30px;">
+          <button type="button" class="auth-pill-btn" style="width: auto; padding: 14px 40px; background: #0083b0;" onclick="handleOnboardingSubmit()">
+            <span>Launch Dashboard Sandbox</span> <i class="fa-solid fa-rocket"></i>
+          </button>
+        </div>
+      </div>
+      
     </div>
   </div>
 

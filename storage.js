@@ -96,6 +96,53 @@ class StorageService {
     });
   }
 
+  // HTML5 canvas 1:1 square crop profile image compressor + Cloudinary upload
+  static async compressProfileImage(file) {
+    return new Promise((resolve, reject) => {
+      if (!file) return resolve(null);
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.createElement("canvas");
+          const size = 200; // Force exactly 200x200px output
+          canvas.width = size;
+          canvas.height = size;
+          
+          const ctx = canvas.getContext("2d");
+          
+          // Crop to 1:1 center square
+          let sx = 0, sy = 0, sWidth = img.width, sHeight = img.height;
+          if (img.width > img.height) {
+            sx = (img.width - img.height) / 2;
+            sWidth = img.height;
+          } else {
+            sy = (img.height - img.width) / 2;
+            sHeight = img.width;
+          }
+          
+          ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, size, size);
+          
+          // Compress to JPEG with 0.8 quality
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.8);
+          
+          try {
+            const url = await StorageService.uploadToCloudinary(compressedBase64);
+            resolve(url);
+          } catch (err) {
+            console.error("[StorageService Cloudinary Profile Image Upload Error]", err);
+            reject(err);
+          }
+        };
+        img.onerror = () => reject(new Error("Failed to load image file."));
+        img.src = event.target.result;
+      };
+      reader.onerror = () => reject(new Error("Failed to read image file."));
+      reader.readAsDataURL(file);
+    });
+  }
+
   // Secure Signed Cloudinary Image Uploader (Direct Client REST Post)
   static async uploadToCloudinary(base64Image) {
     const timestamp = Math.round(new Date().getTime() / 1000);

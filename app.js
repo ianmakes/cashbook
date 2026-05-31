@@ -343,7 +343,7 @@ function refreshActiveViewData(tabId) {
       renderReportsTab();
       break;
     case 'settings':
-      renderSettingsTab();
+      loadSettingsPage();
       break;
   }
 }
@@ -352,22 +352,6 @@ function refreshActiveViewData(tabId) {
 // CORE DATA LOADING
 // ==========================================
 async function initializeDashboardData() {
-  // Render user names
-  if (appState.user) {
-    const displayNameEl = document.getElementById('user-display-name');
-    if (displayNameEl) displayNameEl.innerText = appState.user.displayName;
-    
-    // Auth Detail text could contain email or a description
-    const detail = appState.user.authDetail || appState.user.email || 'Offline Sandbox';
-    const authMethodEl = document.getElementById('user-auth-method');
-    if (authMethodEl) authMethodEl.innerText = detail;
-    
-    // Initials
-    const avatarVal = appState.user.avatar || appState.user.displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-    const avatarLettersEl = document.getElementById('avatar-letters');
-    if (avatarLettersEl) avatarLettersEl.innerText = avatarVal || 'AL';
-  }
-
   // Load ALL datasets in parallel to achieve maximum efficiency and speed!
   const [transactions, accounts, cashbooks, budgets, goals, subscriptions, categories, settings] = await Promise.all([
     window.StorageService.getTransactions(),
@@ -397,6 +381,49 @@ async function initializeDashboardData() {
   appState.appFavicon = settings.appFavicon || '';
   appState.appLogo = settings.appLogo || '';
   appState.appPrimaryColor = settings.appPrimaryColor || '#FCD535';
+
+  // Merge custom profile settings from database if available
+  if (settings.userProfile && appState.user) {
+    appState.user = {
+      ...appState.user,
+      ...settings.userProfile
+    };
+    localStorage.setItem('aura_user_session', JSON.stringify(appState.user));
+  }
+
+  // Check if onboarding is complete
+  if (!settings.onboardingComplete && appState.user) {
+    console.log('[Onboarding] Launching onboarding wizard...');
+    hideAuthScreen();
+    const onboardingOverlay = document.getElementById('onboarding-overlay');
+    if (onboardingOverlay) {
+      onboardingOverlay.classList.add('active');
+      setOnboardingStep(1);
+    }
+    return;
+  }
+
+  // Render user names
+  if (appState.user) {
+    const displayNameEl = document.getElementById('user-display-name');
+    if (displayNameEl) displayNameEl.innerText = appState.user.displayName;
+    
+    // Auth Detail text could contain email or a description
+    const detail = appState.user.authDetail || appState.user.email || 'Offline Sandbox';
+    const authMethodEl = document.getElementById('user-auth-method');
+    if (authMethodEl) authMethodEl.innerText = detail;
+    
+    // Avatar
+    const avatarLettersEl = document.getElementById('avatar-letters');
+    if (avatarLettersEl) {
+      if (appState.user.photoURL) {
+        avatarLettersEl.innerHTML = `<img src="${appState.user.photoURL}" class="user-avatar-img">`;
+      } else {
+        const avatarVal = appState.user.avatar || appState.user.displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        avatarLettersEl.innerHTML = avatarVal || 'AL';
+      }
+    }
+  }
 
   // Apply dynamic settings globally in real time
   applyGeneralSettings();
@@ -1473,6 +1500,7 @@ async function handleProfileSettingsSubmit(event) {
   const phone = document.getElementById('prof-phone-input').value.trim();
   const bio = document.getElementById('prof-bio-input').value.trim();
   const password = document.getElementById('prof-pw-input').value;
+  const photoURL = document.getElementById('prof-image-url-input').value;
   
   // Update user session state
   appState.user = {
@@ -1481,7 +1509,8 @@ async function handleProfileSettingsSubmit(event) {
     displayName,
     email,
     phone,
-    bio
+    bio,
+    photoURL
   };
   
   if (password.length > 0) {
@@ -1490,13 +1519,30 @@ async function handleProfileSettingsSubmit(event) {
     appState.user.authDetail = 'Secure Profile (Local)';
   }
   
-  // Cache user state in localStorage
-  localStorage.setItem('aura_user_session', JSON.stringify(appState.user));
-  
-  // Re-trigger layout updates immediately
-  initializeDashboardData();
-  
-  showDrawerAlert('User Profile updated successfully! Custom settings synced in your active offline PWA session.');
+  try {
+    // Save to Firestore metadata settings under userProfile key!
+    await window.StorageService.updateSettings({
+      userProfile: {
+        avatar,
+        displayName,
+        email,
+        phone,
+        bio,
+        photoURL
+      }
+    });
+
+    // Cache user state in localStorage
+    localStorage.setItem('aura_user_session', JSON.stringify(appState.user));
+    
+    // Re-trigger layout updates immediately
+    await initializeDashboardData();
+    
+    showDrawerAlert('User Profile updated successfully! Custom settings synced in your active offline PWA session.', 'success');
+  } catch (err) {
+    console.error('[Profile Update Error]', err);
+    showDrawerAlert('Failed to update profile settings: ' + err.message, 'error');
+  }
 }
 
 // ==========================================
@@ -2189,3 +2235,222 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+// ==========================================
+// PROFESSIONAL WIZARD ONBOARDING CONTROLLERS
+// ==========================================
+function setOnboardingStep(step) {
+  // Hide all onboarding steps
+  document.querySelectorAll('.onboarding-step').forEach(el => el.classList.remove('active'));
+  
+  // Show target step
+  const targetStepEl = document.getElementById(`onboarding-step-${step}`);
+  if (targetStepEl) targetStepEl.classList.add('active');
+  
+  // Update progress bar
+  const progressPercent = (step / 5) * 100;
+  document.getElementById('onboarding-progress').style.width = `${progressPercent}%`;
+  
+  // Update step badges active styles
+  document.querySelectorAll('.onboarding-step-badge').forEach(badge => {
+    badge.classList.remove('active');
+    const badgeStep = parseInt(badge.getAttribute('data-step'));
+    if (badgeStep <= step) badgeStep <= step && badge.classList.add('active');
+  });
+
+  // If Step 5 (Congratulations Screen), populate the final summary review boxes dynamically!
+  if (step === 5) {
+    const name = document.getElementById('onboarding-display-name').value.trim() || 'Lola Tucker';
+    const initials = document.getElementById('onboarding-initials').value.trim() || 'WR';
+    const currency = document.getElementById('onboarding-currency').value;
+    const cbName = document.getElementById('onboarding-cb-name').value.trim() || 'Primary Stream';
+    
+    document.getElementById('summary-display-name').innerText = name;
+    document.getElementById('summary-initials').innerText = initials;
+    document.getElementById('summary-currency').innerText = currency;
+    document.getElementById('summary-cb-name').innerText = cbName;
+  }
+}
+
+function selectOnboardingColor(color) {
+  document.getElementById('onboarding-selected-color').value = color;
+  
+  // Toggle active selection states in grid
+  document.querySelectorAll('.onboarding-color-opt').forEach(opt => {
+    opt.classList.remove('active');
+    if (opt.getAttribute('data-color') === color) opt.classList.add('active');
+  });
+}
+
+function updateOnboardingAvatarFallback() {
+  const initials = document.getElementById('onboarding-initials').value.toUpperCase().trim().substring(0, 2);
+  const loadingSec = document.getElementById('onboarding-photo-loading');
+  
+  // Only show letters if an uploaded photo URL is not already present
+  if (!document.getElementById('onboarding-photo-url').value) {
+    document.getElementById('onboarding-avatar-preview').innerHTML = `<span id="onboarding-avatar-letters">${initials || 'WR'}</span>`;
+  }
+}
+
+// Resizes file center crops and posts directly to Cloudinary
+async function handleOnboardingPhotoUpload(fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const loadingSec = document.getElementById('onboarding-photo-loading');
+  loadingSec.style.display = 'block';
+
+  try {
+    const url = await window.StorageService.compressProfileImage(file);
+    if (url) {
+      document.getElementById('onboarding-photo-url').value = url;
+      // Render inside preview circle
+      document.getElementById('onboarding-avatar-preview').innerHTML = `<img src="${url}" class="user-avatar-img">`;
+      showDrawerAlert('Avatar picture uploaded successfully!', 'success');
+    }
+  } catch (err) {
+    console.error(err);
+    showDrawerAlert('Failed to upload onboarding photo: ' + err.message, 'error');
+  } finally {
+    loadingSec.style.display = 'none';
+  }
+}
+
+// Resizes file center crops and posts to Cloudinary for Settings Profile tab
+async function handleProfilePhotoUpload(fileInput) {
+  const file = fileInput.files[0];
+  if (!file) return;
+
+  const loadingSec = document.getElementById('prof-image-upload-loading');
+  loadingSec.style.display = 'block';
+
+  try {
+    const url = await window.StorageService.compressProfileImage(file);
+    if (url) {
+      document.getElementById('prof-image-url-input').value = url;
+      // Render preview
+      document.getElementById('prof-image-preview-box').innerHTML = `<img src="${url}" class="user-avatar-img">`;
+      showDrawerAlert('Profile picture uploaded successfully! Be sure to click Update Account Profile to save changes.', 'success');
+    }
+  } catch (err) {
+    console.error(err);
+    showDrawerAlert('Failed to upload profile image: ' + err.message, 'error');
+  } finally {
+    loadingSec.style.display = 'none';
+  }
+}
+
+function getCurrencySymbol(curr) {
+  const symbols = { KES: 'KSh', USD: '$', EUR: '€', GBP: '£', JPY: '¥' };
+  return symbols[curr] || curr;
+}
+
+async function handleOnboardingSubmit() {
+  const userId = appState.user.uid;
+  const name = document.getElementById('onboarding-display-name').value.trim();
+  const initials = document.getElementById('onboarding-initials').value.toUpperCase().trim().substring(0, 2);
+  const photoUrl = document.getElementById('onboarding-photo-url').value;
+  const bio = document.getElementById('onboarding-bio').value.trim();
+  const companyName = document.getElementById('onboarding-company-name').value.trim();
+  const industry = document.getElementById('onboarding-industry').value;
+  const companyDesc = document.getElementById('onboarding-company-desc').value.trim();
+  const currency = document.getElementById('onboarding-currency').value;
+  const color = document.getElementById('onboarding-selected-color').value;
+  const cbName = document.getElementById('onboarding-cb-name').value.trim();
+  const cbIcon = document.getElementById('onboarding-cb-icon').value.trim();
+  const cbDesc = document.getElementById('onboarding-cb-desc').value.trim();
+
+  if (!name) {
+    showDrawerAlert('Please complete Step 1 with a Display Name.', 'error');
+    setOnboardingStep(1);
+    return;
+  }
+  if (!cbName) {
+    showDrawerAlert('Please define your First Cashbook Stream name in Step 4.', 'error');
+    setOnboardingStep(4);
+    return;
+  }
+
+  // Create user profile details
+  const updatedUser = {
+    ...appState.user,
+    displayName: name,
+    avatar: initials || 'WR',
+    photoURL: photoUrl || '',
+    bio: bio || ''
+  };
+  appState.user = updatedUser;
+  localStorage.setItem('aura_user_session', JSON.stringify(updatedUser));
+
+  // Construct settings document
+  const settings = {
+    baseCurrency: currency,
+    exchangeRates: {
+      [currency]: 1.0
+    },
+    appName: 'WealthRight',
+    appDescription: 'Secure, Modern Cash Book & Wealth Tracker',
+    appFavicon: '',
+    appLogo: '',
+    appPrimaryColor: color,
+    onboardingComplete: true,
+    companyDetails: {
+      name: companyName,
+      industry: industry,
+      description: companyDesc
+    },
+    userProfile: {
+      avatar: initials || 'WR',
+      displayName: name,
+      bio: bio || '',
+      photoURL: photoUrl || '',
+      email: appState.user.email || ''
+    }
+  };
+
+  try {
+    showDrawerAlert('Syncing custom wealth nodes in Firestore...', 'info');
+    
+    // Save settings
+    const userId = appState.user.uid;
+    const db = firebase.firestore();
+    await db.collection("users").doc(userId).collection("metadata").doc("settings").set(settings);
+
+    // Save categories (standard seeds)
+    const seedCategories = window.DEFAULT_DATA.categories;
+    await db.collection("users").doc(userId).collection("metadata").doc("categories").set(seedCategories);
+
+    // Create custom cashbook stream
+    const firstCb = {
+      id: `cb-${Date.now()}`,
+      name: cbName || 'Primary Stream',
+      icon: cbIcon || '💼',
+      description: cbDesc || 'Custom income stream'
+    };
+    await db.collection("users").doc(userId).collection("cashbooks").doc(firstCb.id).set(firstCb);
+
+    // Seed default accounts in selected base currency
+    const defaultAccounts = [
+      { id: 'acc-1', name: `${currency} Cash Wallet`, currency: currency, symbol: getCurrencySymbol(currency), balance: 0.00 },
+      { id: 'acc-2', name: `${currency} Bank Account`, currency: currency, symbol: getCurrencySymbol(currency), balance: 0.00 },
+      { id: 'acc-3', name: `${currency} Mobile Wallet`, currency: currency, symbol: getCurrencySymbol(currency), balance: 0.00 }
+    ];
+    for (const acc of defaultAccounts) {
+      await db.collection("users").doc(userId).collection("accounts").doc(acc.id).set(acc);
+    }
+
+    // Force seeded check bypass
+    window.StorageService.seededUserId = userId;
+
+    // Reload UI state
+    await initializeDashboardData();
+    
+    // Hide onboarding
+    document.getElementById('onboarding-overlay').classList.remove('active');
+    
+    showDrawerAlert('Onboarding completed! Welcome to WealthRight.', 'success');
+  } catch (err) {
+    console.error('[Onboarding Sync Error]', err);
+    showDrawerAlert('Sync failed: ' + err.message, 'error');
+  }
+}
