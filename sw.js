@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aura-ledger-v16';
+const CACHE_NAME = 'aura-ledger-v17';
 const ASSETS = [
   './',
   './index.html',

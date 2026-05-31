@@ -708,6 +708,7 @@ function renderCashbooksTab() {
 
 function renderAccountsGrid() {
   const grid = document.getElementById('accounts-grid');
+  if (!grid) return;
   
   if (appState.accounts.length === 0) {
     grid.innerHTML = `<p>No active currency accounts configurer.</p>`;
@@ -1510,10 +1511,18 @@ function closeModal(modalId) {
   
   // Clear any temporary forms or cached images
   if (modalId === 'tx-modal') {
-    document.getElementById('tx-form').reset();
-    document.getElementById('tx-receipt-preview').style.display = 'none';
-    document.getElementById('tx-receipt-status').innerText = 'No picture attached';
-    document.getElementById('tx-converter-sec').style.display = 'none';
+    const txForm = document.getElementById('tx-form');
+    if (txForm) txForm.reset();
+    
+    const receiptPreview = document.getElementById('tx-receipt-preview');
+    if (receiptPreview) receiptPreview.style.display = 'none';
+    
+    const receiptStatus = document.getElementById('tx-receipt-status');
+    if (receiptStatus) receiptStatus.innerText = 'No picture attached';
+    
+    const converterSec = document.getElementById('tx-converter-sec');
+    if (converterSec) converterSec.style.display = 'none';
+    
     appState.receiptBase64 = null;
   }
 }
@@ -1556,12 +1565,14 @@ function handleAccountChange(accountId) {
   const labelFrom = document.getElementById('tx-conv-lbl-from');
   const rateInput = document.getElementById('tx-conv-rate');
 
+  if (!converterSec || !rateInput) return; // Null-safe protection
+
   if (account.currency === appState.baseCurrency) {
     converterSec.style.display = 'none';
     rateInput.value = '';
   } else {
     converterSec.style.display = 'block';
-    labelFrom.innerText = account.currency;
+    if (labelFrom) labelFrom.innerText = account.currency;
     
     // Default rate from settings
     const globalRate = appState.exchangeRates[account.currency] || 1;
@@ -1573,11 +1584,16 @@ function handleAccountChange(accountId) {
 
 function updateRealtimeConversion() {
   const amountInput = document.getElementById('tx-amount');
-  const accountId = document.getElementById('tx-account').value;
+  const txAccSelect = document.getElementById('tx-account');
+  if (!amountInput || !txAccSelect) return;
+
+  const accountId = txAccSelect.value;
   const account = appState.accounts.find(a => a.id === accountId);
   if (!account) return;
 
   const converterSec = document.getElementById('tx-converter-sec');
+  if (!converterSec) return;
+
   if (account.currency === appState.baseCurrency) {
     converterSec.style.display = 'none';
     return;
@@ -1585,6 +1601,7 @@ function updateRealtimeConversion() {
 
   const rateInput = document.getElementById('tx-conv-rate');
   const previewDiv = document.getElementById('tx-conv-preview');
+  if (!rateInput || !previewDiv) return;
 
   const amount = parseFloat(amountInput.value) || 0;
   const rate = parseFloat(rateInput.value) || 0;
