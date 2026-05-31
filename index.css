@@ -2053,8 +2053,26 @@ body.theme-light .nav-link-btn:hover {
   background: var(--border-color);
 }
 
-.skeleton-text { height: 16px; margin-bottom: 8px; }
-.skeleton-title { height: 24px; margin-bottom: 12px; width: 60%; }
+.skeleton-text {
+  height: 16px;
+  margin-bottom: 8px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  animation: pulse 1.5s infinite ease-in-out;
+  width: 80%;
+  margin: auto;
+}
+
+.skeleton-title {
+  height: 24px;
+  margin-bottom: 12px;
+  width: 60%;
+  background-color: var(--border-color);
+  border-radius: 6px;
+  animation: pulse 1.5s infinite ease-in-out;
+  margin: 0 auto 10px auto;
+}
+
 .skeleton-card { height: 120px; }
 
 @keyframes pulse {

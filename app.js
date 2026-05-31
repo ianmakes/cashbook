@@ -2097,6 +2097,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () 
 });
 
 // ==========================================
+// ==========================================
 // BOOTSTRAP INITIALIZATION ON LOAD
 // ==========================================
 window.addEventListener('DOMContentLoaded', () => {
@@ -2109,19 +2110,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const subDate = document.getElementById('sub-date-input');
   if (subDate) subDate.value = new Date().toISOString().split('T')[0];
 
-  // 2. Fetch initial branding settings to render dynamic branding immediately
-  window.StorageService.getSettings().then(settings => {
-    appState.appName = settings.appName || 'Aura Ledger';
-    appState.appDescription = settings.appDescription || 'Secure, Modern Cash Book & Wealth Tracker';
-    appState.appFavicon = settings.appFavicon || '';
-    appState.appLogo = settings.appLogo || '';
-    appState.appPrimaryColor = settings.appPrimaryColor || '#FCD535';
-    applyGeneralSettings();
-  }).catch(err => {
-    console.warn('[Branding] Failed to fetch initial branding settings:', err);
-  });
-
-  // 3. Monitor active auth state via real Firebase Auth SDK
+  // 2. Monitor active auth state via real Firebase Auth SDK
   firebase.auth().onAuthStateChanged(async (user) => {
     if (user) {
       console.log('[Firebase Auth] Active user ID established:', user.uid);
@@ -2141,6 +2130,12 @@ window.addEventListener('DOMContentLoaded', () => {
         // Fetch specific Firestore data for this authenticated UID
         await initializeDashboardData();
         
+        // Remove skeleton classes if overlay is active
+        const titleEl = document.getElementById('auth-title');
+        const descEl = document.getElementById('auth-desc');
+        if (titleEl) titleEl.classList.remove('skeleton-title');
+        if (descEl) descEl.classList.remove('skeleton-text');
+        
         // Success: hide overlay and route to main dashboard index
         hideAuthScreen();
         handleRouting();
@@ -2152,6 +2147,42 @@ window.addEventListener('DOMContentLoaded', () => {
       console.log('[Firebase Auth] Offline / logged out. Requiring authorization credentials.');
       appState.user = null;
       localStorage.removeItem('aura_user_session');
+      
+      // Fetch public branding settings for logged out login screen to keep it visually integrated
+      try {
+        const settings = await window.StorageService.getSettings();
+        appState.appName = settings.appName || 'Aura Ledger';
+        appState.appDescription = settings.appDescription || 'Secure, Modern Cash Book & Wealth Tracker';
+        appState.appFavicon = settings.appFavicon || '';
+        appState.appLogo = settings.appLogo || '';
+        appState.appPrimaryColor = settings.appPrimaryColor || '#FCD535';
+        applyGeneralSettings();
+        
+        // Remove skeleton classes and populate credentials titles beautifully
+        const titleEl = document.getElementById('auth-title');
+        const descEl = document.getElementById('auth-desc');
+        if (titleEl) {
+          titleEl.classList.remove('skeleton-title');
+          titleEl.innerText = window.authMode === 'signup' ? 'Create Account' : 'Welcome Back';
+        }
+        if (descEl) {
+          descEl.classList.remove('skeleton-text');
+          descEl.innerText = window.authMode === 'signup' ? 'Register to manage your custom wealth ledger.' : 'Access your premium wealth sandbox ledger.';
+        }
+      } catch (err) {
+        console.warn('[Branding] Failed to fetch logged-out settings:', err);
+        // Fallback populating
+        const titleEl = document.getElementById('auth-title');
+        const descEl = document.getElementById('auth-desc');
+        if (titleEl) {
+          titleEl.classList.remove('skeleton-title');
+          titleEl.innerText = 'Welcome Back';
+        }
+        if (descEl) {
+          descEl.classList.remove('skeleton-text');
+          descEl.innerText = 'Access your premium wealth sandbox ledger.';
+        }
+      }
       
       // Enforce auth overlay state
       showAuthScreen();
