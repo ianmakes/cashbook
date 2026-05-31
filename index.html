@@ -34,40 +34,128 @@
        FIREBASE AUTH VIEW (Fintech Grade Portal)
        ========================================== -->
   <div id="auth-overlay" class="auth-overlay">
-    <div class="auth-glow-1"></div>
-    <div class="auth-glow-2"></div>
-    <div class="auth-card">
-      <div class="secure-badge">
-        <span class="pulse-dot"></span>
-        <span>Secure Financial Node</span>
-      </div>
-      <div class="auth-logo">
-        <span class="dynamic-app-logo"></span>
-        <span class="dynamic-app-name"></span>
-      </div>
-      <p class="auth-subtitle" id="dynamic-auth-subtitle"></p>
-
-      <!-- Auth Method: Email/Password -->
-      <div id="auth-sec-email" class="auth-method-section">
-        <div class="form-group" style="margin-bottom: 18px;">
-          <label class="form-label">Email Address</label>
-          <div class="input-wrapper">
-            <i class="fa-solid fa-envelope input-icon"></i>
-            <input type="email" id="auth-email-input" class="input-field" placeholder="name@example.com">
+    <div class="auth-split-container">
+      
+      <!-- LEFT PANEL: Marketing & Visuals (hides on mobile < 900px) -->
+      <div class="auth-split-left">
+        <div class="brand-typography">
+          <span class="brand-money">Your Money.</span>
+          <span class="brand-smarter">Smarter, Safer.</span>
+        </div>
+        
+        <div class="illustration-container">
+          <img src="fintech_login_side_image.png" alt="Happy woman in beanbag working on laptop" class="fintech-side-img">
+          
+          <!-- Absolute positioned floating stats badges -->
+          <div class="floating-badge badge-balance">
+            <i class="fa-solid fa-wallet"></i>
+            <div class="badge-content">
+              <span class="badge-label">Active Balance</span>
+              <span class="badge-value">KSh 450,000</span>
+            </div>
+          </div>
+          
+          <div class="floating-badge badge-success">
+            <div class="success-ring"><i class="fa-solid fa-check"></i></div>
+            <div class="badge-content">
+              <span class="badge-label">Transfer Status</span>
+              <span class="badge-value">Successful ✓</span>
+            </div>
           </div>
         </div>
-        <div class="form-group" style="margin-bottom: 24px;">
-          <label class="form-label">Password</label>
-          <div class="input-wrapper">
-            <i class="fa-solid fa-lock input-icon"></i>
-            <input type="password" id="auth-pw-input" class="input-field" placeholder="Enter secure password">
+        
+        <div class="auth-features">
+          <span><i class="fa-solid fa-shield-halved"></i> Bank Level Security</span>
+          <span><i class="fa-solid fa-bolt"></i> Instant Transfers</span>
+          <span><i class="fa-solid fa-chart-line"></i> Smart Insights</span>
+        </div>
+      </div>
+      
+      <!-- RIGHT PANEL: Credentials Form -->
+      <div class="auth-split-right">
+        <div class="auth-header-row">
+          <div class="auth-logo-large">
+            <span class="dynamic-app-logo"></span>
+            <span class="dynamic-app-name-large">Aura Ledger</span>
+          </div>
+          
+          <!-- Top Segmented Pill Control -->
+          <div class="auth-mode-selector">
+            <button type="button" class="mode-pill-btn active" id="pill-btn-login" onclick="setAuthMode('login')">Login</button>
+            <button type="button" class="mode-pill-btn" id="pill-btn-signup" onclick="setAuthMode('signup')">Sign Up</button>
           </div>
         </div>
-        <button class="auth-btn" onclick="triggerMockAuth('Email')">
-          <span>Sign In to Your Ledger</span>
-          <i class="fa-solid fa-arrow-right-to-bracket"></i>
-        </button>
+        
+        <div class="auth-form-card">
+          <div class="auth-titles">
+            <h2 id="auth-title">Welcome Back</h2>
+            <p id="auth-desc">Access your premium wealth sandbox ledger.</p>
+          </div>
+          
+          <form id="auth-portal-form" onsubmit="handleAuthPortalSubmit(event)">
+            <!-- Optional Name Field for Sign Up Mode (hidden by default) -->
+            <div class="form-group" id="group-signup-name" style="display: none; margin-bottom: 18px;">
+               <label class="form-label">Full Name</label>
+               <div class="input-wrapper">
+                 <i class="fa-solid fa-user input-icon"></i>
+                 <input type="text" id="auth-name-input" class="input-field" placeholder="Enter your name">
+               </div>
+            </div>
+            
+            <!-- Email Address Field -->
+            <div class="form-group" style="margin-bottom: 18px;">
+              <label class="form-label">Email Address</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-envelope input-icon"></i>
+                <input type="email" id="auth-email-input" class="input-field" placeholder="name@example.com" required>
+              </div>
+            </div>
+            
+            <!-- Password Field -->
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label class="form-label">Password</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-lock input-icon"></i>
+                <input type="password" id="auth-pw-input" class="input-field" placeholder="************" required>
+                <button type="button" class="pw-toggle-btn" onclick="togglePasswordVisibility()"><i class="fa-solid fa-eye" id="pw-eye-icon"></i></button>
+              </div>
+            </div>
+            
+            <!-- Remember Me & Forgot Password / Terms Checkbox -->
+            <div class="auth-options-row" style="margin-bottom: 24px;">
+              <label class="checkbox-label">
+                <input type="checkbox" id="auth-remember-check" checked>
+                <span class="custom-checkbox"></span>
+                <span class="checkbox-text" id="auth-checkbox-label">Remember me on this node</span>
+              </label>
+              <a href="#" class="forgot-link" onclick="handleForgotPassword(event)">Forgot Password?</a>
+            </div>
+            
+            <!-- Action Button (Green Pill) -->
+            <button type="submit" class="auth-pill-btn" id="auth-submit-btn">
+              <span>Sign In to Ledger</span>
+              <i class="fa-solid fa-arrow-right-to-bracket" id="auth-submit-icon"></i>
+            </button>
+          </form>
+          
+          <div class="divider-text">Or continue with</div>
+          
+          <!-- Social Login Grid -->
+          <div class="social-login-grid">
+            <button type="button" class="social-btn social-google" onclick="handleSocialAuth('google')">
+              <i class="fa-brands fa-google"></i> Google
+            </button>
+            <button type="button" class="social-btn social-twitter" onclick="handleSocialAuth('twitter')">
+              <i class="fa-brands fa-twitter"></i> Twitter
+            </button>
+          </div>
+        </div>
+        
+        <div class="auth-split-footer">
+          <span>Protected by AES-256 cloud encryption nodes.</span>
+        </div>
       </div>
+      
     </div>
   </div>
 
@@ -251,20 +339,6 @@
           </p>
 
           <div class="streams-grid" id="cashbooks-grid">
-            <!-- Dynamically populated -->
-          </div>
-
-          <div class="dashboard-panel-title" style="margin-top: 40px; margin-bottom: 14px;">
-            <span>Multi-Currency Accounts</span>
-            <button class="header-action-btn" onclick="openModal('account-modal')" style="padding: 6px 12px; font-size: 11px;">
-              <i class="fa-solid fa-wallet"></i> New Account
-            </button>
-          </div>
-          <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; max-width: 600px;">
-            Hold balances in different currencies. Your total wealth adjusts dynamically based on custom settings exchange rates.
-          </p>
-
-          <div class="accounts-grid" id="accounts-grid">
             <!-- Dynamically populated -->
           </div>
         </section>
@@ -768,35 +842,10 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1.2fr; gap: 16px; margin-bottom: 16px;">
-          <div>
-            <label class="form-label">Amount</label>
-            <input type="number" id="tx-amount" class="input-field" step="0.01" min="0.01" placeholder="0.00" required oninput="updateRealtimeConversion()">
-          </div>
-          <div>
-            <label class="form-label">Account (Currency)</label>
-            <select id="tx-account" class="input-field" required onchange="handleAccountChange(this.value)">
-              <!-- Populated dynamically -->
-            </select>
-          </div>
-        </div>
-
-        <!-- Dynamic Currency Converter helper (visible when chosen account is not in KES) -->
-        <div id="tx-converter-sec" style="display: none; background: var(--primary-glow); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; margin-bottom: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <span style="font-size: 11px; font-weight: 700; color: var(--primary-hover); letter-spacing: 0.05em;"><i class="fa-solid fa-calculator"></i> REALTIME KES CONVERTER</span>
-            <span style="font-size: 11px; color: var(--text-secondary);" id="tx-converter-badge">Base Currency: KES</span>
-          </div>
-          <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; align-items: center;">
-            <div>
-              <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">Exchange Rate (1 <span id="tx-conv-lbl-from">USD</span> = X KES)</label>
-              <input type="number" id="tx-conv-rate" class="input-field" style="padding: 8px 12px; font-size: 12px;" step="0.01" min="0.01" oninput="updateRealtimeConversion()">
-            </div>
-            <div>
-              <label class="form-label" style="font-size: 11px; margin-bottom: 4px;">Equivalent in Base Currency</label>
-              <div style="font-size: 14px; font-weight: 700; color: var(--income-green); padding: 8px 0; font-family: 'JetBrains Mono', monospace;" id="tx-conv-preview">KSh 0.00</div>
-            </div>
-          </div>
+        <div style="margin-bottom: 16px;">
+          <label class="form-label">Amount</label>
+          <input type="number" id="tx-amount" class="input-field" step="0.01" min="0.01" placeholder="0.00" required>
+          <select id="tx-account" style="display: none;"></select>
         </div>
 
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
@@ -957,17 +1006,10 @@
           <input type="text" id="sub-name-input" class="input-field" placeholder="e.g. Netflix Premium, Gym membership" required>
         </div>
 
-        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px;">
-          <div>
-            <label class="form-label">Cost Amount</label>
-            <input type="number" id="sub-amount-input" class="input-field" step="0.01" placeholder="0.00" required>
-          </div>
-          <div>
-            <label class="form-label">Account (Currency)</label>
-            <select id="sub-account-input" class="input-field" required>
-              <!-- Populated dynamically -->
-            </select>
-          </div>
+        <div style="margin-bottom: 16px;">
+          <label class="form-label">Cost Amount</label>
+          <input type="number" id="sub-amount-input" class="input-field" step="0.01" placeholder="0.00" required>
+          <select id="sub-account-input" style="display: none;"></select>
         </div>
 
         <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 20px;">
@@ -1059,6 +1101,9 @@
       </button>
     </div>
   </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container" class="toast-container"></div>
 
   <!-- Load State & Service Worker Controllers -->
   <script src="data.js"></script>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aura-ledger-v15';
+const CACHE_NAME = 'aura-ledger-v16';
 const ASSETS = [
   './',
   './index.html',
@@ -6,7 +6,8 @@ const ASSETS = [
   './data.js',
   './storage.js',
   './app.js',
-  './manifest.json'
+  './manifest.json',
+  './fintech_login_side_image.png'
 ];
 
 // Install Event - cache core shell assets

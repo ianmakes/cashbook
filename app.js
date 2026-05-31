@@ -67,102 +67,186 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================
-// FIREBASE AUTH VISUAL MOCKUPS
 // ==========================================
-function switchAuthTab(method) {
-  // Toggle active tab class
-  document.querySelectorAll('.auth-tab-btn').forEach(btn => btn.classList.remove('active'));
-  document.getElementById(`tab-${method}`).classList.add('active');
+// REAL FIREBASE AUTHENTICATION CONTROLLER
+// ==========================================
+window.authMode = 'login';
 
-  // Toggle visible sections
-  document.querySelectorAll('.auth-method-section').forEach(sec => sec.style.display = 'none');
-  document.getElementById(`auth-sec-${method}`).style.display = 'block';
+function setAuthMode(mode) {
+  window.authMode = mode;
+  
+  const titleEl = document.getElementById('auth-title');
+  const descEl = document.getElementById('auth-desc');
+  const nameGroup = document.getElementById('group-signup-name');
+  const nameInput = document.getElementById('auth-name-input');
+  const submitBtn = document.getElementById('auth-submit-btn');
+  const checkboxLabel = document.getElementById('auth-checkbox-label');
+  
+  const pillLogin = document.getElementById('pill-btn-login');
+  const pillSignup = document.getElementById('pill-btn-signup');
+
+  // Reset inputs
+  document.getElementById('auth-email-input').value = '';
+  document.getElementById('auth-pw-input').value = '';
+  if (nameInput) nameInput.value = '';
+
+  if (mode === 'signup') {
+    if (pillLogin) pillLogin.classList.remove('active');
+    if (pillSignup) pillSignup.classList.add('active');
+    
+    if (titleEl) titleEl.innerText = 'Create Account';
+    if (descEl) descEl.innerText = 'Register to manage your custom wealth ledger.';
+    if (nameGroup) nameGroup.style.display = 'block';
+    if (nameInput) nameInput.required = true;
+    if (submitBtn) {
+      submitBtn.innerHTML = `<span>Sign Up & Launch</span> <i class="fa-solid fa-user-plus"></i>`;
+    }
+    if (checkboxLabel) checkboxLabel.innerText = 'I agree to the Terms of Node Authorization';
+  } else {
+    if (pillLogin) pillLogin.classList.add('active');
+    if (pillSignup) pillSignup.classList.remove('active');
+    
+    if (titleEl) titleEl.innerText = 'Welcome Back';
+    if (descEl) descEl.innerText = 'Access your premium wealth sandbox ledger.';
+    if (nameGroup) nameGroup.style.display = 'none';
+    if (nameInput) nameInput.required = false;
+    if (submitBtn) {
+      submitBtn.innerHTML = `<span>Sign In to Ledger</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>`;
+    }
+    if (checkboxLabel) checkboxLabel.innerText = 'Remember me on this node';
+  }
 }
 
-function sendMockOtp() {
-  const phone = document.getElementById('auth-phone-input').value;
-  if (!phone) {
-    showDrawerAlert('Please enter a valid phone number.');
+function togglePasswordVisibility() {
+  const pwInput = document.getElementById('auth-pw-input');
+  const eyeIcon = document.getElementById('pw-eye-icon');
+  if (pwInput && eyeIcon) {
+    if (pwInput.type === 'password') {
+      pwInput.type = 'text';
+      eyeIcon.classList.remove('fa-eye');
+      eyeIcon.classList.add('fa-eye-slash');
+    } else {
+      pwInput.type = 'password';
+      eyeIcon.classList.remove('fa-eye-slash');
+      eyeIcon.classList.add('fa-eye');
+    }
+  }
+}
+
+async function handleForgotPassword(e) {
+  e.preventDefault();
+  const email = document.getElementById('auth-email-input').value.trim();
+  if (!email) {
+    showDrawerAlert('Please enter your email address to request a reset link.', 'error');
     return;
   }
   
-  // Slide out phone trigger button, slide in OTP Virtual Keypad
-  document.getElementById('send-otp-btn').style.display = 'none';
-  document.getElementById('otp-entry-box').style.display = 'block';
-  
-  // Show a helpful mock prompt simulating an SMS delivery
-  showDrawerAlert(`[Aura Ledger Mock OTP] SMS verification code sent to ${phone}. Enter Code "2605" to authorize.`);
-  document.getElementById('auth-otp-input').value = '';
-}
-
-function pressOtpKey(num) {
-  const input = document.getElementById('auth-otp-input');
-  if (input.value.length < 6) {
-    input.value += num;
+  try {
+    await firebase.auth().sendPasswordResetEmail(email);
+    showDrawerAlert('Password reset email sent! Check your inbox.');
+  } catch (err) {
+    console.error(err);
+    showDrawerAlert('Failed to send reset email: ' + err.message, 'error');
   }
 }
 
-function clearOtpKey() {
-  const input = document.getElementById('auth-otp-input');
-  input.value = input.value.slice(0, -1);
-}
-
-function triggerMockAuth(methodName) {
-  const emailEl = document.getElementById('auth-email-input');
-  const emailInput = emailEl ? emailEl.value : '';
-
-  let displayName = 'Secure Owner';
-  let authDetail = methodName;
-
-  if (methodName === 'Email') {
-    if (!emailInput) {
-      showDrawerAlert('Please input email');
-      return;
+async function handleAuthPortalSubmit(event) {
+  event.preventDefault();
+  
+  const email = document.getElementById('auth-email-input').value.trim();
+  const password = document.getElementById('auth-pw-input').value;
+  const nameEl = document.getElementById('auth-name-input');
+  const name = nameEl ? nameEl.value.trim() : '';
+  
+  const submitBtn = document.getElementById('auth-submit-btn');
+  const originalHtml = submitBtn.innerHTML;
+  
+  submitBtn.disabled = true;
+  
+  if (window.authMode === 'signup') {
+    submitBtn.innerHTML = `<span>Creating Account...</span> <i class="fa-solid fa-spinner fa-spin"></i>`;
+    try {
+      const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      await user.updateProfile({ displayName: name });
+      
+      showDrawerAlert('Account created successfully! Welcome to Aura Ledger.');
+    } catch (err) {
+      console.error(err);
+      showDrawerAlert('Sign up failed: ' + err.message, 'error');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalHtml;
     }
-    displayName = emailInput.split('@')[0];
-    displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
-    authDetail = `Email: ${emailInput}`;
+  } else {
+    submitBtn.innerHTML = `<span>Authorizing...</span> <i class="fa-solid fa-spinner fa-spin"></i>`;
+    try {
+      await firebase.auth().signInWithEmailAndPassword(email, password);
+      showDrawerAlert('Access authorized! Loading ledger streams.');
+    } catch (err) {
+      console.error(err);
+      showDrawerAlert('Authentication failed: ' + err.message, 'error');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalHtml;
+    }
   }
-
-  // Save session details to state
-  appState.user = { displayName, authDetail };
-  
-  // Cache user state in localStorage
-  localStorage.setItem('aura_user_session', JSON.stringify(appState.user));
-  
-  hideAuthScreen();
-  initializeDashboardData();
 }
 
-function bypassAuth() {
-  appState.user = {
-    displayName: 'Guest Owner',
-    authDetail: 'Offline Local Sandbox'
-  };
-  localStorage.setItem('aura_user_session', JSON.stringify(appState.user));
-  hideAuthScreen();
-  initializeDashboardData();
+async function handleSocialAuth(providerName) {
+  let provider;
+  if (providerName === 'google') {
+    provider = new firebase.auth.GoogleAuthProvider();
+  } else if (providerName === 'twitter') {
+    provider = new firebase.auth.TwitterAuthProvider();
+  }
+  
+  try {
+    await firebase.auth().signInWithPopup(provider);
+    showDrawerAlert('Social authentication successful!');
+  } catch (err) {
+    console.error(err);
+    showDrawerAlert(`Social authentication failed: ${err.message}. Please use email and password instead.`, 'error');
+  }
+}
+
+async function logout() {
+  try {
+    await firebase.auth().signOut();
+    localStorage.removeItem('aura_user_session');
+    appState.user = null;
+    showDrawerAlert('Successfully logged out.');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function showAuthScreen() {
+  const authOverlay = document.getElementById('auth-overlay');
+  const appContainer = document.querySelector('.app-container');
+  
+  if (appContainer) {
+    appContainer.style.display = 'none';
+  }
+  if (authOverlay) {
+    authOverlay.style.display = 'flex';
+    authOverlay.style.opacity = '1';
+    
+    const formCard = document.querySelector('.auth-form-card');
+    if (formCard) formCard.classList.add('visible');
+  }
 }
 
 function hideAuthScreen() {
   const authOverlay = document.getElementById('auth-overlay');
-  authOverlay.style.opacity = '0';
-  setTimeout(() => {
-    authOverlay.style.display = 'none';
-  }, 500);
-}
-
-function logout() {
-  localStorage.removeItem('aura_user_session');
-  appState.user = null;
+  const appContainer = document.querySelector('.app-container');
   
-  // Show auth view
-  const authOverlay = document.getElementById('auth-overlay');
+  if (appContainer) {
+    appContainer.style.display = 'flex';
+  }
   if (authOverlay) {
-    authOverlay.style.display = 'flex';
+    authOverlay.style.opacity = '0';
     setTimeout(() => {
-      authOverlay.style.opacity = '1';
-    }, 50);
+      authOverlay.style.display = 'none';
+    }, 500);
   }
 }
 
@@ -1179,11 +1263,13 @@ function applyGeneralSettings() {
   // 3. Logo Image replacements
   document.querySelectorAll('.dynamic-app-logo').forEach(el => {
     if (logo) {
-      el.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: 24px; max-width: 120px; object-fit: contain; border-radius: 4px;">`;
-      el.style.display = 'inline-block';
+      el.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: auto; max-height: 56px; max-width: 100%; object-fit: contain; border-radius: 4px; display: block; width: 100%;">`;
+      el.style.display = 'block';
+      el.style.width = '100%';
     } else {
       el.innerHTML = `<i class="fa-solid fa-wallet" style="color: var(--primary);"></i>`;
       el.style.display = 'inline-block';
+      el.style.width = 'auto';
     }
   });
 
@@ -1198,7 +1284,7 @@ function applyGeneralSettings() {
         sidebarLogoIcon.style.display = 'flex';
         sidebarLogoIcon.style.width = '100%';
         sidebarLogoIcon.style.justifyContent = 'flex-start';
-        sidebarLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: auto; max-height: 48px; max-width: 100%; object-fit: contain; border-radius: 4px;">`;
+        sidebarLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: auto; max-height: 48px; max-width: 100%; object-fit: contain; border-radius: 4px; display: block; width: 100%;">`;
       }
       sidebarName.style.display = 'none';
     } else {
@@ -1212,8 +1298,8 @@ function applyGeneralSettings() {
   }
 
   // Specific Auth Overlay Logo & Name toggle logic
-  const authLogoIcon = document.querySelector('.auth-logo .dynamic-app-logo');
-  const authName = document.querySelector('.auth-logo .dynamic-app-name');
+  const authLogoIcon = document.querySelector('.auth-logo-large .dynamic-app-logo') || document.querySelector('.auth-logo .dynamic-app-logo');
+  const authName = document.querySelector('.auth-logo-large .dynamic-app-name-large') || document.querySelector('.auth-logo .dynamic-app-name');
   
   if (authName) {
     if (logo) {
@@ -1222,7 +1308,7 @@ function applyGeneralSettings() {
         authLogoIcon.style.display = 'flex';
         authLogoIcon.style.width = '100%';
         authLogoIcon.style.justifyContent = 'center';
-        authLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: auto; max-height: 64px; max-width: 100%; object-fit: contain; border-radius: 4px;">`;
+        authLogoIcon.innerHTML = `<img src="${logo}" alt="${name} Logo" style="height: auto; max-height: 64px; max-width: 100%; object-fit: contain; border-radius: 4px; display: block; width: 100%;">`;
       }
       authName.style.display = 'none';
     } else {
@@ -1513,20 +1599,12 @@ async function handleTransactionSubmit(event) {
   const type = document.getElementById('tx-type').value;
   const date = document.getElementById('tx-date').value;
   const amount = document.getElementById('tx-amount').value;
-  const accountId = document.getElementById('tx-account').value;
+  const accountId = 'acc-1';
   const category = document.getElementById('tx-category').value;
   const cashbookId = document.getElementById('tx-cashbook').value;
   const description = document.getElementById('tx-desc').value;
 
-  const account = appState.accounts.find(a => a.id === accountId);
-  if (!account) {
-    showDrawerAlert('Invalid Account');
-    return;
-  }
-
-  // Retrieve manually-entered rate if secondary currency
-  const rateInput = document.getElementById('tx-conv-rate');
-  const customRate = (account.currency !== appState.baseCurrency && rateInput && rateInput.value) ? parseFloat(rateInput.value) : null;
+  const account = appState.accounts.find(a => a.id === accountId) || { currency: 'KES', name: 'KES Cash Wallet' };
 
   // Construct new transaction payload
   const payload = {
@@ -1537,13 +1615,22 @@ async function handleTransactionSubmit(event) {
     accountId,
     cashbookId,
     category,
-    customRate: customRate,
+    customRate: null,
     description: description || `${type.charAt(0).toUpperCase() + type.slice(1)}: ${category}`,
     receipt: appState.receiptBase64
   };
 
   // Dispatch asynchronously to database storage layer
   await window.StorageService.addTransaction(payload);
+  
+  // Clear receipt preview state
+  appState.receiptBase64 = null;
+  const previewImg = document.getElementById('tx-receipt-preview-img');
+  if (previewImg) previewImg.src = '';
+  const previewBox = document.getElementById('tx-receipt-preview');
+  if (previewBox) previewBox.classList.remove('active');
+  const statusText = document.getElementById('tx-receipt-status');
+  if (statusText) statusText.innerText = 'No picture attached';
   
   closeModal('tx-modal');
   
@@ -1754,15 +1841,11 @@ async function handleSubscriptionSubmit(event) {
   event.preventDefault();
   const name = document.getElementById('sub-name-input').value;
   const amount = document.getElementById('sub-amount-input').value;
-  const accountId = document.getElementById('sub-account-input').value;
+  const accountId = 'acc-1';
   const frequency = document.getElementById('sub-freq-input').value;
   const nextBill = document.getElementById('sub-date-input').value;
 
-  const acc = appState.accounts.find(a => a.id === accountId);
-  if (!acc) {
-    showDrawerAlert('Invalid Account select');
-    return;
-  }
+  const acc = appState.accounts.find(a => a.id === accountId) || { currency: 'KES', name: 'KES Cash Wallet' };
 
   await window.StorageService.addSubscription({
     name,
@@ -1903,10 +1986,55 @@ function handleConfirmDrawerYes() {
   }
 }
 
-// Dynamic Alert Drawer
-function showDrawerAlert(message) {
-  document.getElementById('alert-drawer-message').innerText = message;
-  openModal('alert-drawer');
+// Dynamic Alert Toast
+function showDrawerAlert(message, type = 'info') {
+  // Detect class based on keywords if type is default 'info'
+  let finalType = type;
+  if (type === 'info') {
+    const msgLower = message.toLowerCase();
+    if (msgLower.includes('success') || msgLower.includes('complete') || msgLower.includes('restored') || msgLower.includes('recorded') || msgLower.includes('saved')) {
+      finalType = 'success';
+    } else if (msgLower.includes('fail') || msgLower.includes('invalid') || msgLower.includes('error') || msgLower.includes('warning') || msgLower.includes('wipe') || msgLower.includes('please')) {
+      finalType = 'error';
+    }
+  }
+  
+  // Append a toast element to toast container
+  const container = document.getElementById('toast-container');
+  if (!container) {
+    console.warn('[Toast] toast-container not found in DOM.');
+    return;
+  }
+  
+  const toast = document.createElement('div');
+  toast.className = `toast-item ${finalType}`;
+  
+  let icon = 'fa-circle-info';
+  if (finalType === 'success') icon = 'fa-circle-check';
+  if (finalType === 'error') icon = 'fa-circle-exclamation';
+  
+  toast.innerHTML = `
+    <i class="fa-solid ${icon} toast-icon"></i>
+    <div class="toast-content">${message}</div>
+    <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Trigger animation active class after a tiny tick
+  setTimeout(() => {
+    toast.classList.add('visible');
+  }, 10);
+  
+  // Auto-dismiss after 4.5 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.classList.remove('visible');
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }
+  }, 4500);
 }
 
 function applyThemeClasses() {
@@ -1959,10 +2087,12 @@ window.addEventListener('DOMContentLoaded', () => {
   applyThemeClasses();
 
   // 1. Establish current date values for transaction input forms
-  document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('sub-date-input').value = new Date().toISOString().split('T')[0];
+  const txDate = document.getElementById('tx-date');
+  if (txDate) txDate.value = new Date().toISOString().split('T')[0];
+  const subDate = document.getElementById('sub-date-input');
+  if (subDate) subDate.value = new Date().toISOString().split('T')[0];
 
-  // 2. Fetch initial branding settings from database to render dynamic branding immediately (even when logged out)
+  // 2. Fetch initial branding settings to render dynamic branding immediately
   window.StorageService.getSettings().then(settings => {
     appState.appName = settings.appName || 'Aura Ledger';
     appState.appDescription = settings.appDescription || 'Secure, Modern Cash Book & Wealth Tracker';
@@ -1970,29 +2100,44 @@ window.addEventListener('DOMContentLoaded', () => {
     appState.appLogo = settings.appLogo || '';
     appState.appPrimaryColor = settings.appPrimaryColor || '#FCD535';
     applyGeneralSettings();
-    
-    // Reveal the login card beautifully once branding is fully applied
-    const authCard = document.querySelector('.auth-card');
-    if (authCard) authCard.classList.add('visible');
   }).catch(err => {
     console.warn('[Branding] Failed to fetch initial branding settings:', err);
-    // Even if settings fail, make the login card visible so the user can sign in
-    const authCard = document.querySelector('.auth-card');
-    if (authCard) authCard.classList.add('visible');
   });
 
-  // 3. Check if a cached user session exists, bypassing or loading Auth overlay
-  const cachedUser = localStorage.getItem('aura_user_session');
-  if (cachedUser) {
-    appState.user = JSON.parse(cachedUser);
-    hideAuthScreen();
-    initializeDashboardData().then(() => {
-      // Execute the router on load to mount the right page URL!
-      handleRouting();
-    });
-  } else {
-    // Directly show Email / Password form section on load
-    const emailSec = document.getElementById('auth-sec-email');
-    if (emailSec) emailSec.style.display = 'block';
-  }
+  // 3. Monitor active auth state via real Firebase Auth SDK
+  firebase.auth().onAuthStateChanged(async (user) => {
+    if (user) {
+      console.log('[Firebase Auth] Active user ID established:', user.uid);
+      
+      // Sync auth state
+      appState.user = {
+        uid: user.uid,
+        displayName: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        authDetail: `Email: ${user.email}`,
+        avatar: user.displayName ? user.displayName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : user.email.substring(0, 2).toUpperCase()
+      };
+      
+      localStorage.setItem('aura_user_session', JSON.stringify(appState.user));
+      
+      try {
+        // Fetch specific Firestore data for this authenticated UID
+        await initializeDashboardData();
+        
+        // Success: hide overlay and route to main dashboard index
+        hideAuthScreen();
+        handleRouting();
+      } catch (err) {
+        console.error('[Auth] Failed to initialize user ledger:', err);
+        showDrawerAlert('Error loading data: ' + err.message, 'error');
+      }
+    } else {
+      console.log('[Firebase Auth] Offline / logged out. Requiring authorization credentials.');
+      appState.user = null;
+      localStorage.removeItem('aura_user_session');
+      
+      // Enforce auth overlay state
+      showAuthScreen();
+    }
+  });
 });
